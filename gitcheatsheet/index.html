@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Git 常用指令备忘单</title>
+    <link rel='shortcut icon' href='../icon//pokemon.ico'>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="sheetBack">
+        <div class="cw">
+            <header class="maintit">
+                Git 常用指令备忘单
+            </header>
+            <section class="mainbody" id="vuemountee">
+                <div>
+                    <dl 
+                        class="directiveblock"
+                        v-for='(m,i) in leftdata' :key='i'
+                    >
+                        <dt class="celltit">{{ m.name }}</dt>
+                        <dd class="cellctt">
+                            <ul class="itemslist">
+                                <li 
+                                    class='itembox'
+                                    v-for='(fm,fi) in m.list' :key='fi'
+                                >
+                                    <div class="directivearea">{{ fm.directive }}</div>
+                                    <div class="descriptionarea">{{ fm.description }}</div>
+                                </li>
+                            </ul>
+                        </dd>
+                    </dl>
+                </div>
+                <div>
+                    <dl 
+                        class="directiveblock"
+                        v-for='(m,i) in rightdata' :key='i'
+                    >
+                        <dt class="celltit">{{ m.name }}</dt>
+                        <dd class="cellctt">
+                            <ul class="itemslist">
+                                <li 
+                                    class='itembox'
+                                    v-for='(fm,fi) in m.list' :key='fi'
+                                >
+                                    <div class="directivearea">{{ fm.directive }}</div>
+                                    <div class="descriptionarea">{{ fm.description }}</div>
+                                </li>
+                            </ul>
+                        </dd>
+                    </dl>
+                </div>
+            </section>
+            <footer class="mainbuttom">
+                <span>参考 Git Cheat Sheet &lt;CN&gt; by riku</span>
+                <span>制作 hellarose 2020-6-30</span>
+            </footer>
+        </div>
+    </div>
+</body>
+<script src="js/rem.js"></script>
+<script src="js/vue2.6.11.js"></script>
+<script src="js/main.js"></script>
+</html>

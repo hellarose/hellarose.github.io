@@ -1,0 +1,67 @@
+@charset "UTF-8";
+/*全局边距清空*/
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/*图片边框和对齐*/
+img {
+  border: none;
+  vertical-align: middle;
+}
+
+/*表单输入元素边框轮廓对齐*/
+input {
+  vertical-align: middle;
+}
+
+/*表格*/
+table {
+  border-collapse: collapse;
+  text-align: center;
+}
+
+table th {
+  text-align: center;
+}
+
+/*列表样式清空*/
+ul, li, ol {
+  list-style: none;
+}
+
+/*超链接样式清空*/
+a {
+  text-decoration: none;
+  color: black;
+}
+
+/* 清除浮动 */
+.cf {
+  zoom: 1;
+}
+
+.cf:after {
+  display: block;
+  height: 0;
+  content: '';
+  visibility: hidden;
+  clear: both;
+}
+
+.zzexa {
+  display: block;
+  text-decoration: none;
+  color: black;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  font-size: 0.16rem;
+}
+/*# sourceMappingURL=xqcn.css.map */
