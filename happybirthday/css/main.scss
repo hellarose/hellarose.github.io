@@ -1,0 +1,125 @@
+@charset 'utf-8';
+/*全局边距清空*/
+* {
+    margin: 0;
+    padding: 0;
+}
+/*图片边框和对齐*/
+img {
+    border: none;
+    vertical-align: middle;
+}
+/*表单输入元素边框轮廓对齐*/
+input {
+    //outline: none;
+    //border: none;
+    vertical-align: middle;
+}
+/*表格*/
+table {
+border-collapse: collapse;
+text-align: center;
+th {
+    text-align: center;
+}
+}
+/*列表样式清空*/
+ul,li,ol {
+    list-style: none;
+}
+/*超链接样式清空*/
+a {
+    text-decoration: none;
+    color: black;
+}
+/* 清除浮动 */
+.cf {
+    zoom:1;
+    &:after {
+        display:block;
+        height: 0;
+        content: '';
+        visibility: hidden;
+        clear: both;
+    }
+}
+.zzexa {
+    display: block;
+    text-decoration: none;
+    color: black;
+}
+
+html,body {
+    height: 100%;
+}
+body {
+    font-size: 0.16rem;
+    background: #070919;
+}
+.card {
+    // 背景盒子
+    &-background {
+        height: 100%;
+        background: url('../img/b8df488b87d6277f8bb1c4473f381f30e824fc09.jpg') 0 center no-repeat;
+        background-size:100% auto; 
+        position: relative;
+    }
+    &-content-wrapper {
+        $h:calc(10.31rem * 0.8);
+        position: absolute;
+        left: 5%;
+        top: calc(50% - 10.31rem * 0.4);
+        width: 90%;
+        height: $h;
+        background: 
+            url('../img/upper_frame.png') left top no-repeat ,
+            white url('../img/buttom_frame.png') left bottom no-repeat;
+        background-size: 100% 50%,
+            100% 50%;
+        opacity: 0.8;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+}
+.congratulations{
+    position: relative;
+    height: 100%;
+}
+.congratulations>.in_chinese {
+    position: absolute;
+    left: calc(50% - 0.65rem);
+    top: calc(50% - 3.2rem);
+    width: 1.3rem;
+    height: 5rem;
+    text-align: center;
+    line-height: 1.2;
+    color: #BC9C7C;
+    font-size:1.2rem;
+    text-shadow: 10px 10px 4px #bce;
+    font-weight: 700;
+}
+.congratulations>.in_english {
+    position: absolute;
+    right: calc(50% - 1.25rem);
+    bottom: 0.2rem;
+    width: 2.5rem;
+    height: 0.4rem;
+    font-size: 0.24rem;
+    color: red;
+    text-align: center;
+    font-weight: 700;
+    text-decoration: underline;
+
+}
+.congratulations>.date {
+    position: absolute;
+    right: calc(50% - 1.25rem);
+    bottom: 0.5rem;
+    width: 2.5rem;
+    height: 0.4rem;
+    font-size: 0.24rem;
+    color: #BC9C7C;
+    text-align: center;
+    font-weight: 500;
+    text-decoration: underline;
+}
