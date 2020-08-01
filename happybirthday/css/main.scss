@@ -63,6 +63,8 @@ body {
         background: url('../img/b8df488b87d6277f8bb1c4473f381f30e824fc09.jpg') 0 center no-repeat;
         background-size:100% auto; 
         position: relative;
+        // visibility: hidden;
+        display: none;
     }
     &-content-wrapper {
         $h:calc(10.31rem * 0.8);
@@ -73,30 +75,57 @@ body {
         height: $h;
         background: 
             url('../img/upper_frame.png') left top no-repeat ,
-            white url('../img/buttom_frame.png') left bottom no-repeat;
-        background-size: 100% 50%,
-            100% 50%;
+            url('../img/buttom_frame.png') left bottom no-repeat;
+        background-size: 100% 50%, 100% 50%;
         opacity: 0.8;
         border-radius: 4px;
         overflow: hidden;
+
+        display: none;
+        .horse {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background:  url('../img/horse_white.png') center center no-repeat;
+            background-size: 90% 90%;
+            width: 100%;
+            height: 100%;
+            opacity: 0.5;
+            display: none;
+
+        }
     }
 }
 .congratulations{
     position: relative;
     height: 100%;
+    display: none;
+}
+.congratulations {
+    position: absolute;
+    // display: none;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    font-size: 5rem;
+    color: #ff0;
+    font-family: '楷体';
+    line-height: 1.5;
 }
 .congratulations>.in_chinese {
     position: absolute;
-    left: calc(50% - 0.65rem);
-    top: calc(50% - 3.2rem);
-    width: 1.3rem;
+    left: calc(50% - 0.7rem);
+    top: calc(50% - 3.5rem);
+    width: 1.4rem;
     height: 5rem;
     text-align: center;
     line-height: 1.2;
-    color: #BC9C7C;
-    font-size:1.2rem;
-    text-shadow: 10px 10px 4px #bce;
+    color: #ff0;
+    font-size:1.4rem;
+    text-shadow: 10px 10px 4px rgba($color: pink, $alpha: 0.5);
     font-weight: 700;
+    font-family: '楷体';
+    display: none;
 }
 .congratulations>.in_english {
     position: absolute;
@@ -105,10 +134,13 @@ body {
     width: 2.5rem;
     height: 0.4rem;
     font-size: 0.24rem;
-    color: red;
+    color: #ff0;
+    text-shadow: 10px 10px 4px rgba($color: pink, $alpha: 0.5);
     text-align: center;
     font-weight: 700;
     text-decoration: underline;
+    font-family: 'Times New Roman', Times, serif;
+    display: none;
 
 }
 .congratulations>.date {
@@ -118,8 +150,10 @@ body {
     width: 2.5rem;
     height: 0.4rem;
     font-size: 0.24rem;
-    color: #BC9C7C;
+    color: #ff0;
+    text-shadow: 10px 10px 4px rgba($color: pink, $alpha: 0.5);
     text-align: center;
     font-weight: 500;
     text-decoration: underline;
+    display: none;
 }
