@@ -17,12 +17,13 @@
     let listUl=qs('#list')
     let baseUrl='https://hellarose.github.io'
     let menuList=[
-        {name:'项目',url:baseUrl+'/项目'},
-        {name:'测试数据',url:baseUrl+'/测试数据'},
         {name:'网页收藏',url:baseUrl+'/web_collects'},
+        {name:'项目',url:baseUrl+'/项目'},
         {name:'象棋',url:baseUrl+'/chessboard'},
+        {name:'测试数据',url:baseUrl+'/测试数据'},
         {name:'GIT命令速查表',url:baseUrl+'/gitcheatsheet'},
         {name:'生日贺卡-草稿',url:baseUrl+'/happybirthday'},
+        {name:'CDN 资源',url:baseUrl+'/CDNs'},
     ]
     listUl.innerHTML=menuList.filter(m=>m).map(m=>{
         return mod(m.url,m.name);
