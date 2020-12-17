@@ -7,10 +7,22 @@
     <title>Document</title>
 </head>
 <body>
-    <ul>
-        <li><a href="https://hellarose.github.io/">首页</a></li>
-        <li><a href="https://hellarose.github.io/测试数据/data/index.json">测试数据</a></li>
-        <li><a href="https://hellarose.github.io/测试数据/data/jsonString.json">测试数据</a></li>
-    </ul>
+    <ul id="list"></ul>
 </body>
+<script>
+        function qs(es){return document.querySelector(es)}
+        function mod(url,name){
+            return `<li><a href="${url}">${name}</a></li>`
+        }
+        let listUl=qs('#list')
+        let baseUrl='https://hellarose.github.io'
+        let menuList=[
+            {name:'首页',url:baseUrl+'/'},
+            {name:'json数据',url:baseUrl+'/测试数据/data/index.json'},
+            {name:'json字串数据',url:baseUrl+'/测试数据/data/jsonString.json'},
+        ]
+        listUl.innerHTML=menuList.filter(m=>m).map(m=>{
+            return mod(m.url,m.name);
+        }).join('')
+    </script>
 </html>
