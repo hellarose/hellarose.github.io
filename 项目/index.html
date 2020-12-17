@@ -7,11 +7,23 @@
     <title>Document</title>
 </head>
 <body>
-    <ul>
-        <li><a href="https://hellarose.github.io/">首页</a></li>
-        <li><a href="https://hellarose.github.io/项目/dist">DIST five</a></li>
-        <li><a href="https://hellarose.github.io/项目/myself">DIST 个人 教育app项目</a></li>
-        <li><a href="https://hellarose.github.io/项目/trade_OL">DIST 个人 后台管理系统</a></li>
-    </ul>
+    <ul id="list"></ul>
 </body>
+<script>
+        function qs(es){return document.querySelector(es)}
+        function mod(url,name){
+            return `<li><a href="${url}">${name}</a></li>`
+        }
+        let listUl=qs('#list')
+        let baseUrl='https://hellarose.github.io'
+        let menuList=[
+            {name:'首页',url:baseUrl+'/'},
+            {name:'DIST five',url:baseUrl+'/项目/dist'},
+            {name:'DIST 个人 教育app项目',url:baseUrl+'/项目/myself'},
+            {name:'DIST 个人 后台管理系统',url:baseUrl+'/项目/trade_OL'},
+        ]
+        listUl.innerHTML=menuList.filter(m=>m).map(m=>{
+            return mod(m.url,m.name);
+        }).join('')
+    </script>
 </html>
