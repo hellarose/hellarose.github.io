@@ -20,6 +20,7 @@
             {name:'首页',url:baseUrl+'/'},
             {name:'json数据',url:baseUrl+'/测试数据/data/index.json'},
             {name:'json字串数据',url:baseUrl+'/测试数据/data/jsonString.json'},
+            {name:'spcJSON含有大数',url:baseUrl+'/测试数据/data/spc.json'},
         ]
         listUl.innerHTML=menuList.filter(m=>m).map(m=>{
             return mod(m.url,m.name);
