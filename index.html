@@ -15,18 +15,19 @@
         return `<li><a href="${url}">${name}</a></li>`
     }
     let listUl=qs('#list')
-    let baseUrl='https://hellarose.github.io'
+    const baseUrl='https://hellarose.github.io'
     let menuList=[
-        {name:'网页收藏',url:baseUrl+'/web_collects'},
-        {name:'项目',url:baseUrl+'/项目'},
-        {name:'象棋',url:baseUrl+'/chessboard'},
-        {name:'测试数据',url:baseUrl+'/测试数据'},
-        {name:'GIT命令速查表',url:baseUrl+'/gitcheatsheet'},
-        {name:'生日贺卡-草稿',url:baseUrl+'/happybirthday'},
-        {name:'CDN 资源',url:baseUrl+'/CDNs'},
+        {name:'网页收藏',url:'/web_collects'},
+        {name:'项目',url:'/projects'},
+        {name:'象棋',url:'/chessboard'},
+        {name:'测试数据',url:'/data'},
+        {name:'GIT命令速查表',url:'/gitcheatsheet'},
+        {name:'生日贺卡-草稿',url:'/happybirthday'},
+        {name:'CDN 资源',url:'/CDNs'},
+        {name:'二进制文件下载',url:'/byteFilte/theByteFilte.xlsx'}
     ]
     listUl.innerHTML=menuList.filter(m=>m).map(m=>{
-        return mod(m.url,m.name);
+        return mod(baseUrl+m.url,m.name);
     }).join('')
 </script>
 </html>

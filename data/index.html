@@ -16,12 +16,21 @@
         }
         let listUl=qs('#list')
         let baseUrl='https://hellarose.github.io'
-        let menuList=[
-            {name:'首页',url:baseUrl+'/'},
-            {name:'json数据',url:baseUrl+'/测试数据/data/index.json'},
-            {name:'json字串数据',url:baseUrl+'/测试数据/data/jsonString.json'},
-            {name:'spcJSON含有大数',url:baseUrl+'/测试数据/data/spc.json'},
+        const dataRoute='/data/data'
+
+        let dataRouteList=[
+            {name:'json数据',url:baseUrl+'/index.json'},
+            {name:'json字串数据',url:baseUrl+'/jsonString.json'},
+            {name:'spcJSON含有大数',url:baseUrl+'/spc.json'},
         ]
+        let backList=[{name:'返回 首页',url:'/'}];
+        let menuList=dataRouteList.map(m=>{
+            m.url=dataRoute+m.url
+            return m
+        }).concat(backList).map(m=>{
+            m.url=baseUrl+m.url
+            return m
+        })
         listUl.innerHTML=menuList.filter(m=>m).map(m=>{
             return mod(m.url,m.name);
         }).join('')
