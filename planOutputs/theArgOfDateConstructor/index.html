@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="screen"></div>
+</body>
+<script>
+    let shower=document.getElementById('screen');
+    let contentTit='new Date(...arg) arg可以是形如：<br /> &nbsp; &nbsp; &nbsp; &nbsp;'
+    let contentEnd='<br />的数字、字串、参数列'
+    let brr=[
+    '2020-12-30 12:07:07',
+    '2020-12-30',
+    '2020-12-30T04:07:07.272Z',
+    'Wed, 30 Dec 2020 04:07:07 GMT',
+    'Wed Dec 30 2020 12:07:07 GMT+0800 (GMT+08:00)',
+    'Wed Dec 30 2020',
+    1609301227272,
+    '2020-3',
+    '2020 2',
+    '2020/12',
+    '2020/12-12',
+    '2020 12/30',
+    '2020',
+    '12',
+    '2020,12',
+    [2020,11,20],
+    [2020,11,20,12,12,12],
+    '2020,11,20 12:12:12',
+    '2020 11,11 12:12',
+];
+let timeStr='2020年12月30日'
+shower.innerHTML=contentTit
+    +brr.map(m=>{
+        switch( typeof(m)){
+            case 'string':return `"${m}"`;break;
+            case 'number':return m;break;
+            case 'object':return m.join(',');break;
+        }
+    }).join('<br /> &nbsp; &nbsp; &nbsp; &nbsp;')+contentEnd+'<br /><br /> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;'
+    +'记录日期： '+timeStr
+</script>
+</html>

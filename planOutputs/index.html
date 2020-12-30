@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <ul id="list"></ul>
+</body>
+<script>
+        function qs(es){return document.querySelector(es)}
+        function mod(url,name){
+            return `<li><a href="${url}">${name}</a></li>`
+        }
+        let listUl=qs('#list')
+        const baseUrl='https://hellarose.github.io'
+        const partRoute='/planOutputs'
+        let proRouteList=[
+            {name:'new Date(...arg)的参数探究',url:'/theArgOfDateConstructor'},
+        ];
+        let backList=[{name:'返回 首页',url:'/'}];
+        
+        let menuList=proRouteList.map(m=>{
+            m.url=partRoute+m.url
+            return m
+        }).concat(backList).map(m=>{
+            m.url=baseUrl+m.url
+            return m
+        })
+        listUl.innerHTML=menuList.filter(m=>m).map(m=>{
+            return mod(m.url,m.name);
+        }).join('')
+
+    </script>
+</html>
