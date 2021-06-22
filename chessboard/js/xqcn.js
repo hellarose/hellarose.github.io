@@ -1,20 +1,16 @@
 
 
 function rem(){
-    var docel=document.documentElement
+    let docel=document.documentElement
     docel.style.fontSize=docel.clientWidth / 10.8 +'px'
 }
 /*jqajax-rem-isc-ready*/
 $(function(){
     rem()
     $(window).on('resize',rem);
-    //document.addEventListener('touchmove',function(e){
-    //    var ev = e || window.event
-    //    ev.preventDefault()
-    //    ev.stopPropagation()
-    //},{passive:false})
+    
     (function () {
-        var XiangQi = window.XiangQi = function (id) {
+        let XiangQi = window.XiangQi = function (id) {
             this.canvas.w = this.canvas.w || document.body.clientWidth;
             this.init(id);
         }
@@ -32,7 +28,7 @@ $(function(){
             },
             init: function (id) {
                 //私有属性
-                var that = this;
+                let that = this;
                 that.bodys = [];
                 that.element = document.getElementById(id);
                 that.element.width = that.canvas.w;
@@ -44,7 +40,7 @@ $(function(){
                 this.bindevent();
             },
             drawQipan: function () {
-                var that = this,
+                let that = this,
                     ctx = that.ctx,
                     bodys = that.bodys,
                     r = 9,
@@ -68,13 +64,13 @@ $(function(){
                 that.radius = cellSize / 2;
                 that.maxR = r;
                 that.maxC = c;
-                for (var i = 0; i <= r; i++) {
+                for (let i = 0; i <= r; i++) {
                     cX = startX;
                     cY = startY + (i * cellSize);
                     ctx.moveTo(cX, cY);
                     ctx.lineTo(cX + w, cY);
                     bodys[i] = bodys[i] || [];
-                    for (var k = 0; k <= c; k++) {
+                    for (let k = 0; k <= c; k++) {
                         rX = startX + (k * cellSize);
                         rY = startY + (i * cellSize);
                         bodys[i][k] = bodys[i][k] || {};
@@ -97,7 +93,7 @@ $(function(){
                 }
                 ctx.stroke();
                 ctx.restore();
-                var fontOffsetY = bodys[4][0].y + that.radius;
+                let fontOffsetY = bodys[4][0].y + that.radius;
                 ctx.fillStyle = "#000";
                 ctx.font = "bold 40px Arial";
                 ctx.textBaseline = "middle";
@@ -119,31 +115,31 @@ $(function(){
                 ctx.lineTo(bodys[9][3].x, bodys[9][3].y);
                 ctx.stroke();
                 function drawTopLeft(x, y, l, o) {
-                    var s = x - o - l, e = s + l, c = y - o;
+                    let s = x - o - l, e = s + l, c = y - o;
                     ctx.moveTo(s, c);
                     ctx.lineTo(e, c);
                     ctx.lineTo(e, c - l);
                 }
                 function drawTopRight(x, y, l, o) {
-                    var s = x + o + l, e = s - l, c = y - o;
+                    let s = x + o + l, e = s - l, c = y - o;
                     ctx.moveTo(s, c);
                     ctx.lineTo(e, c);
                     ctx.lineTo(e, c - l);
                 }
                 function drawBottomLeft(x, y, l, o) {
-                    var s = x - o - l, e = s + l, c = y + o;
+                    let s = x - o - l, e = s + l, c = y + o;
                     ctx.moveTo(s, c);
                     ctx.lineTo(e, c);
                     ctx.lineTo(e, c + l);
                 }
                 function drawBottomRight(x, y, l, o) {
-                    var s = x + o + l, e = s - l, c = y + o;
+                    let s = x + o + l, e = s - l, c = y + o;
                     ctx.moveTo(s, c);
                     ctx.lineTo(e, c);
                     ctx.lineTo(e, c + l);
                 }
                 function drawX(r, c, pos) {
-                    var x = bodys[r][c].x,
+                    let x = bodys[r][c].x,
                         y = bodys[r][c].y;
                     ctx.beginPath();
                     ctx.lineWidth = 3;
@@ -182,7 +178,7 @@ $(function(){
                 ctx.stroke();
             },
             renderQiJu: function (redBottom) {
-                var qiJu = this.qiJu = [
+                let qiJu = this.qiJu = [
                     ['车', '马', '相', '仕', '帅', '仕', '相', '马', '车'],
                     [],
                     ['', '炮', '', '', '', '', '', '炮', ''],
@@ -204,8 +200,8 @@ $(function(){
                 this.drawQiJu(qiJu);
             },
             drawQiJu: function (qiJu) {
-                for (var i = 0; i < qiJu.length; i++) {
-                    for (var k = 0; k < qiJu[i].length; k++) {
+                for (let i = 0; i < qiJu.length; i++) {
+                    for (let k = 0; k < qiJu[i].length; k++) {
                         if (qiJu[i][k] != '') {
                             this.bodys[i][k].qizi = new QiZi(this, i, k, qiJu[i][k], (this.redBottom && i > 5 || this.redBottom == false && i < 5) ? true : false);
                         } else {
@@ -232,7 +228,7 @@ $(function(){
                 this.resetQiJu();
             },
             getPositions: function (e) {
-                var x = e.x, y = e.y;
+                let x = e.x, y = e.y;
                 if (e.layerX) {
                     x = e.layerX;
                     y = e.layerY;
@@ -243,7 +239,7 @@ $(function(){
                 return { x: x, y: y };
             },
             check: function (x, y) {
-                var that = this,
+                let that = this,
                     minX = that.startX - that.radius,
                     minY = that.startY - that.radius,
                     maxX = that.startX + that.qipan.w + that.radius,
@@ -251,9 +247,9 @@ $(function(){
                 return x >= minX && x <= maxX && y >= minY && y <= maxY;
             },
             eachBody: function (handler) {
-                var bodys = this.bodys, len = bodys.length;
-                for (var i = 0; i < len; i++) {
-                    for (var k = 0, len2 = bodys[i].length; k < len2; k++) {
+                let bodys = this.bodys, len = bodys.length;
+                for (let i = 0; i < len; i++) {
+                    for (let k = 0, len2 = bodys[i].length; k < len2; k++) {
                         if (handler(bodys[i][k], i, k) === true) {
                             return bodys[i][k];
                         }
@@ -262,9 +258,9 @@ $(function(){
                 return null;
             },
             findPos: function (x, y) {
-                var that = this, r = that.radius;
+                let that = this, r = that.radius;
                 return this.eachBody(function (pos) {
-                    var minX = pos.x - r, maxX = pos.x + r, minY = pos.y - r, maxY = pos.y + r;
+                    let minX = pos.x - r, maxX = pos.x + r, minY = pos.y - r, maxY = pos.y + r;
                     if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
                         return true;
                     }
@@ -275,7 +271,7 @@ $(function(){
                 step2: "黑方走"
             },
             each: function (data, fn) {
-                for (var i = 0, len = data.length; i < len; i++) {
+                for (let i = 0, len = data.length; i < len; i++) {
                     fn.call(data[i], i, data[i]);
                 }
             },
@@ -286,14 +282,14 @@ $(function(){
                 // this.ctx.st
             },
             bindevent: function () {
-                var that = this;
+                let that = this;
                 that.qiziRedMove = true;
                 that.qiziSelected = false;
                 that.qiziCurrent = null;
                 this.element.addEventListener("click", function (e) {
-                    var xy = that.getPositions(e);
+                    let xy = that.getPositions(e);
                     if (that.check(xy.x, xy.y)) {
-                        var pos = that.findPos(xy.x, xy.y);
+                        let pos = that.findPos(xy.x, xy.y);
                         if (pos != null) {
                             if (pos.qizi && pos.qizi.isred == that.qiziRedMove) {
                                 that.resetQiJu();
@@ -318,7 +314,7 @@ $(function(){
                 this.ctx.restore();
             }
         };
-        var QiZi = function (qipan, r, c, text, isred) {
+        let QiZi = function (qipan, r, c, text, isred) {
             this.text = text;
             this.isred = isred;
             this.ctx = qipan.ctx;
@@ -326,7 +322,7 @@ $(function(){
             this.r = r;
             this.c = c;
             this.draw();
-            var that = this, maxR = that.qipan.maxR, maxC = that.qipan.maxC;
+            let that = this, maxR = that.qipan.maxR, maxC = that.qipan.maxC;
             this.checkstep = (function () {
                 if (text == "兵" || text == "卒") {
                     if (that.r > 4) {
@@ -345,7 +341,7 @@ $(function(){
                         if (this.r != r && this.c != c) {
                             return false;
                         }
-                        var bodys = this.qipan.bodys, step = this.getMoveRange(r, c);
+                        let bodys = this.qipan.bodys, step = this.getMoveRange(r, c);
                         return bodys[r][c].qizi != null && step == 1 || bodys[r][c].qizi == null && step == 0;
                     }
                 } else if (text == "车" || text == "車") {
@@ -378,7 +374,7 @@ $(function(){
                 } else if (text == "士" || text == "仕") {
                     if (that.r > 4) {
                         return function (r, c) {
-                            var l = 7, l2 = 9, b = 3, b2 = 5;
+                            let l = 7, l2 = 9, b = 3, b2 = 5;
                             if (r < l || r > l2 || c < b || c > b2) {
                                 return false;
                             }
@@ -390,7 +386,7 @@ $(function(){
                         }
                     } else {
                         return function (r, c) {
-                            var l = 0, l2 = 3, b = 3, b2 = 5;
+                            let l = 0, l2 = 3, b = 3, b2 = 5;
                             if (r < l || r > l2 || c < b || c > b2) {
                                 return false;
                             }
@@ -406,7 +402,7 @@ $(function(){
                 } else if (text == "将" || text == "帅") {
                     if (that.r > 4) {
                         return function (r, c) {
-                            var l = 7, l2 = 9, b = 3, b2 = 5;
+                            let l = 7, l2 = 9, b = 3, b2 = 5;
                             if (r < l || r > l2 || c < b || c > b2) {
                                 return false;
                             }
@@ -418,7 +414,7 @@ $(function(){
                         }
                     } else {
                         return function (r, c) {
-                            var l = 0, l2 = 3, b = 3, b2 = 5;
+                            let l = 0, l2 = 3, b = 3, b2 = 5;
                             if (r < l || r > l2 || c < b || c > b2) {
                                 return false;
                             }
@@ -438,7 +434,7 @@ $(function(){
                 return this.qipan.bodys[r][c].qizi == null;
             },
             getMoveRange: function (r, c) {
-                var step = 0,
+                let step = 0,
                     bodys = this.qipan.bodys,
                     minR = Math.min(this.r, r), 
                     maxR = Math.max(this.r, r), 
@@ -446,13 +442,13 @@ $(function(){
                     maxC = Math.max(this.c, c);
 
                 if (this.r != r && this.c == c) {
-                    for (var i = minR; i < maxR; i++) {
+                    for (let i = minR; i < maxR; i++) {
                         if (i != this.r && i != r && bodys[i][c].qizi != null) {
                             step++;
                         }
                     }
                 } else if (this.r == r && this.c != c) {
-                    for (var i = minC; i < maxC; i++) {
+                    for (let i = minC; i < maxC; i++) {
                         if (i != this.c && i != c && bodys[r][i].qizi != null) {
                             step++;
                         }
@@ -461,7 +457,7 @@ $(function(){
                 return step;
             },
             draw: function () {
-                var
+                let
                     qipan = this.qipan,
                     isred = this.isred,
                     ctx = this.ctx,
@@ -498,7 +494,7 @@ $(function(){
             },
             moveTo: function (r, c) {
                 if (this.checkstep(r, c)) {
-                    var r2 = this.r, c2 = this.c;
+                    let r2 = this.r, c2 = this.c;
                     this.r = r;
                     this.c = c;
                     this.qipan.moveQizi(r2, c2, r, c);
@@ -507,7 +503,7 @@ $(function(){
                 return false;
             },
             select: function () {
-                var that = this, ctx = that.ctx, len = 15;
+                let that = this, ctx = that.ctx, len = 15;
                 ctx.beginPath();
                 ctx.strokeStyle = "#00ff21";
                 ctx.lineWidth = 5;
@@ -531,7 +527,7 @@ $(function(){
             }
         };
     }());
-    var xq = new XiangQi("xqCanvas");
+    let xq = new XiangQi("xqCanvas");
     xq.renderQiJu(true);
     
 })//end jqajax-rem-isc-ready
