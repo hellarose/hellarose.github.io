@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简易对象对比工具</title>
+  <link rel="stylesheet" href="./styles/index.css"></link>
+  <script src="./scripts/utils.js"></script>
+</head>
+<body>
+  <div class="contaienr">
+    <div class="input-section">
+      <div class="h2">输入</div>
+      <div class="form">
+        <div class="left">
+          <textarea name="forA" id="forA" class="tareaForA"></textarea>
+        </div>
+        <div class="right">
+          <textarea name="forB" id="forB" class="tareaForB"></textarea>
+        </div>
+      </div>
+      <div class="btn">
+        <button class="btn-compare">对比</button>
+      </div>
+    </div>
+    <div class="output-section">
+      <div class="h2">结果</div>
+      <div class="result"></div>
+    </div>
+  </div>
+  <script src="./scripts/index.js"></script>
+  <script>
+    qs('.btn-compare').addEventListener('click',function(req,res){
+      let obja = parseTareaJson(qs('.tareaForA').value)
+      let objb = parseTareaJson(qs('.tareaForB').value)
+      qs('.result').innerHTML = `<pre>${JSON.stringify(diffObjects(obja,objb),null,2)}</pre>`
+    })
+  </script>
+</body>
+</html>
