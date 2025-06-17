@@ -1,0 +1,3940 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!-- 
+  TO DO 
+  枪花药的有效期 
+  技能 技能盲盒 移除 转而添加商店 在商店里概率刷出两种宝箱 
+  冷却 
+  自然祝福效果应仅当前战斗有效 祝福发动的提示带上祝福名称  
+  重写数据引用机制 
+  存档风干与存档充水
+  游戏结算与统计
+  游戏重新开始机制 
+ -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勇者之路：村庄毁灭的救赎</title>
+  <link rel="stylesheet" href="./assets/css/font-awesome@6.4.0.css">
+  <link rel="stylesheet" href="./assets/css/rpgGame.css">
+  <script src="./utils/rpgGame.js"></script>
+  <script src="./assets//data/game.all.configs.js"></script>
+  <script src="./assets//data/game.all.enemies.js"></script>
+  <script src="./assets//data/game.all.equips.js"></script>
+  <script src="./assets//data/game.all.items.js"></script>
+  <script src="./assets//data/game.all.skills.js"></script>
+  <script src="./assets//data/game.all.status.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="game-area">
+      <div class="game-header">
+        <h1 class="game-title">勇者之路：村庄毁灭的救赎</h1>
+        <p class="game-subtitle">你的村庄被摧毁了，赶往国都击败路边王，拯救这片土地！</p>
+        <div class="save-controls">
+          <button id="save-btn" class="save-btn">
+            <i class="fas fa-save"></i>保存游戏
+          </button>
+          <button id="load-btn" class="save-btn">
+            <i class="fas fa-folder-open"></i>加载游戏
+          </button>
+          <button id="export-btn" class="save-btn">
+            <i class="fas fa-file-export"></i>导出存档
+          </button>
+          <button id="import-btn" class="save-btn">
+            <i class="fas fa-file-import"></i>导入存档
+          </button>
+          <button id="copy-save-btn" class="save-btn">
+            <i class="fas fa-copy"></i>复制存档
+          </button>
+          <button id="paste-save-btn" class="save-btn">
+            <i class="fas fa-paste"></i>粘贴存档
+          </button>
+        </div>
+      </div>
+
+      <div class="event-panel">
+        <h2 class="event-title" id="event-title">最初的剧情</h2>
+        <div class="event-description" id="event-description">
+          村庄被暴动的侵染者毁灭了，你是唯一可能逃离的人！现在做出行动吧：
+        </div>
+        <div class="actions-container" id="actions-container">
+          <button class="action-btn escape">从林地逃走</button>
+          <button class="action-btn explore">冒险搜寻</button>
+        </div>
+      </div>
+
+      <div class="combat-panel" id="combat-panel">
+        <h2 class="combat-title">战斗</h2>
+        <div class="combat-area">
+          <div class="combatant">
+            <div class="combatant-img">🧙‍♂️</div>
+            <div class="combatant-name" id="player-name">勇者</div>
+            <div class="hp-bar">
+              <div class="hp-fill" id="player-hp-bar" style="width: 100%;"></div>
+              <div class="hp-text" id="player-hp-text">50/50</div>
+            </div>
+          </div>
+
+          <div class="combatant">
+            <div class="combatant-img" id="enemy-icon">👹</div>
+            <div class="combatant-name" id="enemy-name">哥布木</div>
+            <div class="hp-bar">
+              <div class="hp-fill" id="enemy-hp-bar" style="width: 100%;"></div>
+              <div class="hp-text" id="enemy-hp-text">8/8</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="combat-actions" id="combat-actions">
+          <button class="action-btn fight" id="combat-attack">攻击</button>
+          <button class="action-btn skill" id="combat-skill">技能</button>
+          <button class="action-btn item" id="combat-item">道具</button>
+        </div>
+
+        <div class="combat-log" id="combat-log">
+          <div class="log-entry info">战斗开始！</div>
+        </div>
+      </div>
+
+      <div class="map-area">
+        <h3 class="map-title">王国地图</h3>
+        <div class="map-container" id="map-container">
+          <!-- 地图位置会通过JS动态生成 -->
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <h2 class="stats-title">角色状态</h2>
+      <div class="location-indicator" id="location">当前位置: 陷落的村庄</div>
+
+      <div class="character-stats">
+        <div class="stat-item">
+          <div class="stat-label">生命值</div>
+          <div class="stat-value" id="hp-value">50</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">攻击力</div>
+          <div class="stat-value" id="attack-value">5</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">防御力</div>
+          <div class="stat-value" id="defend-value">3</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">金币</div>
+          <div class="stat-value" id="gold-value">10</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">经验值</div>
+          <div class="stat-value" id="exp-value">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">等级</div>
+          <div class="stat-value" id="level-value">1</div>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="stat-label">下一级经验</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="exp-progress" style="width: 0%;"></div>
+          <div class="progress-text" id="exp-text">0/100</div>
+        </div>
+      </div>
+
+      <h3 class="inventory-title">装备</h3>
+      <div class="inventory-items" id="equipment-container">
+        <!-- 装备会通过JS动态生成 -->
+      </div>
+
+      <h3 class="inventory-title">背包</h3>
+      <div class="inventory-items" id="inventory-container">
+        <!-- 背包物品会通过JS动态生成 -->
+      </div>
+
+      <h3 class="inventory-title">技能</h3>
+      <div class="inventory-items" id="skills-container">
+        <!-- 技能会通过JS动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 道具选择模态框 -->
+  <div class="modal" id="item-modal">
+    <div class="modal-content">
+      <h2 class="modal-title">选择道具</h2>
+      <div class="item-modal-grid" id="item-modal-grid">
+        <!-- 道具项会动态生成 -->
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn" id="close-item-modal">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 技能选择模态框 -->
+  <div class="modal" id="skill-modal">
+    <div class="modal-content">
+      <h2 class="modal-title">选择技能</h2>
+      <div class="skill-modal-grid" id="skill-modal-grid">
+        <!-- 技能项会动态生成 -->
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn" id="close-skill-modal">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 升级奖励模态框 -->
+  <div class="modal" id="levelup-modal">
+    <div class="modal-content">
+      <h2 class="modal-title">等级提升！</h2>
+      <div class="event-description" id="levelup-description">
+        恭喜你升到了 <span id="new-level">2</span> 级！请选择一项奖励：
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn" id="levelup-hp">增加生命值</button>
+        <button class="action-btn" id="levelup-attack">增加攻击力</button>
+        <button class="action-btn" id="levelup-skill">获得新技能</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 存档操作模态框 -->
+  <div class="modal" id="save-modal">
+    <div class="modal-content">
+      <h2 class="modal-title" id="save-modal-title">存档操作</h2>
+      <div class="save-modal-content">
+        <textarea class="save-textarea" id="save-textarea" placeholder="存档内容将显示在这里..."></textarea>
+        <div class="modal-actions">
+          <button class="action-btn" id="save-modal-confirm">确认</button>
+          <button class="action-btn" id="save-modal-cancel">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知 -->
+  <div class="notification" id="notification">
+    <div id="notification-text">操作成功！</div>
+  </div>
+  <!-- 战斗界面 悬停在玩家/敌人上时显示 -->
+  <div class="unit-info-notice" id="unit-info-notice">
+    <div class="unit-name"></div>
+    <div class="unit-attrs"></div>
+    <div class="unit-status"></div>
+    <div class="unit-equipment"></div>
+    <div class="enemy-unit-reward"></div>
+  </div>
+  <script>
+    
+    // 游戏数据
+    const gameData = {
+      currentLocation: "陷落的村庄",
+      currentPlaceIndex: 0,
+      player: JSON.parse(JSON.stringify(rpgGameBasePlayerData)),
+      currentEvent: JSON.parse(JSON.stringify(rpgGameVeryStartEvent)),
+      combat: JSON.parse(JSON.stringify(rpgGameBaseCombatData)),
+      locations: [
+        { name: "陷落的村庄", description: "被摧毁的故乡", enemies: ["路边一条", "路边一筒", "路边一万", '路边一条龙'] },
+        { name: "受侵蚀的山林", description: "危险的森林", enemies: ["哥布木", "哥布林", "哥布森"] },
+        {
+          name: "残破的教堂", description: "暂时的避难所", enemies: ["哥石木", "哥石林"], explore: [{
+            type: 'item',
+            rate: 80,
+            require: {
+              level: 10,
+              defeatList:['哥布森'],
+            },
+            name: '泣玉',
+          }]
+        },
+        { name: "山中湖", description: "宁静的湖泊", enemies: ["哥石森", "弟剪木"] },
+        { name: "国都", description: "王国的中心", enemies: ["弟剪林", "弟剪森", '弟剪吹'] },
+        { name: "失修地道", description: "黑暗的地下通道", enemies: ["路边一条龙", "路边大四喜", 'undefined'],
+          explore:[
+            {
+              type:'skill',
+              rate:50,
+              name:'水龙弹Lv5',
+              require:{
+                level:50,
+              },
+            }
+          ]
+        }
+      ],
+      uselessExploreResults: [
+        { name: '你发呆了一会儿！', rate: 20, },
+        { name: '你看到一个巨大的背影，躲了一阵子！', rate: 20, },
+        { name: '看到熟悉的风景，感怀了一阵子！', rate: 20, },
+        { name: '找到一个安全的地方，好好地睡了一会儿！', rate: 20, effect: { hp: 100 } },
+        { name: '找到一个简陋的地方，睡觉但被蚊虫叮了！', rate: 20, effect: { hp: -1 } },
+        { name: '被什么东西追了一路，你终于安全了！', rate: 20, },
+        { name: '追了猎物很久，但没捉到！', rate: 20, },
+        { name: '路遇小河，你取了水！', rate: 20, },
+        { name: '掉进井里，废了好长时间爬出来！', rate: 20, }
+      ],
+      lvupRewardSkills: [
+        // "水弹",
+        // "风弹",
+        "火弹",
+        "电弹",
+        "强力击",
+        "治疗术",
+        // "钱袋猛击",
+        '大治疗术',
+        // '物品盲盒',
+      ].filter(Boolean),
+
+      allEnemies:JSON.parse(JSON.stringify(rpgGameEnemyData)),
+      allItems:JSON.parse(JSON.stringify(rpgGameItemData)),
+      allSkills:JSON.parse(JSON.stringify(rpgGameSkillData)),
+      allStatus:JSON.parse(JSON.stringify(rpgGameStatusData)),
+      allEquips:JSON.parse(JSON.stringify(rpgGameEquipmentData)),
+    };
+
+    // DOM 元素
+    const elements = {
+      eventTitle: document.getElementById('event-title'),
+      eventDescription: document.getElementById('event-description'),
+      actionsContainer: document.getElementById('actions-container'),
+      combatPanel: document.getElementById('combat-panel'),
+      playerName: document.getElementById('player-name'),
+      playerHpBar: document.getElementById('player-hp-bar'),
+      playerHpText: document.getElementById('player-hp-text'),
+      enemyIcon: document.getElementById('enemy-icon'),
+      enemyName: document.getElementById('enemy-name'),
+      enemyHpBar: document.getElementById('enemy-hp-bar'),
+      enemyHpText: document.getElementById('enemy-hp-text'),
+      combatActions: document.getElementById('combat-actions'),
+      combatLog: document.getElementById('combat-log'),
+      location: document.getElementById('location'),
+      hpValue: document.getElementById('hp-value'),
+      attackValue: document.getElementById('attack-value'),
+      defendValue: document.getElementById('defend-value'),
+      goldValue: document.getElementById('gold-value'),
+      expValue: document.getElementById('exp-value'),
+      levelValue: document.getElementById('level-value'),
+      expProgress: document.getElementById('exp-progress'),
+      expText: document.getElementById('exp-text'),
+      mapContainer: document.getElementById('map-container'),
+      equipmentContainer: document.getElementById('equipment-container'),
+      inventoryContainer: document.getElementById('inventory-container'),
+      skillsContainer: document.getElementById('skills-container'),
+      itemModal: document.getElementById('item-modal'),
+      itemModalGrid: document.getElementById('item-modal-grid'),
+      closeItemModal: document.getElementById('close-item-modal'),
+      skillModal: document.getElementById('skill-modal'),
+      skillModalGrid: document.getElementById('skill-modal-grid'),
+      closeSkillModal: document.getElementById('close-skill-modal'),
+      levelupModal: document.getElementById('levelup-modal'),
+      newLevel: document.getElementById('new-level'),
+      levelupDescription: document.getElementById('levelup-description'),
+      levelupHp: document.getElementById('levelup-hp'),
+      levelupAttack: document.getElementById('levelup-attack'),
+      levelupSkill: document.getElementById('levelup-skill'),
+      saveModal: document.getElementById('save-modal'),
+      saveModalTitle: document.getElementById('save-modal-title'),
+      saveTextarea: document.getElementById('save-textarea'),
+      saveModalConfirm: document.getElementById('save-modal-confirm'),
+      saveModalCancel: document.getElementById('save-modal-cancel'),
+      notification: document.getElementById('notification'),
+      notificationText: document.getElementById('notification-text'),
+      unitInfoNotice: document.getElementById('unit-info-notice'),
+    };
+
+    // 存档操作类型
+    let currentSaveOperation = null;
+
+    // 初始化游戏
+    function initGame() {
+      // 尝试加载本地存档
+      loadLocalSave();
+
+      initData()
+
+      renderMap();
+      updateUI();
+      setupEventListeners();
+    }
+
+    function initData() {
+      // 玩家
+      // 物品调用
+      let player = gameData.player
+      // 物品
+      for (let i = 0; i < player.inventory.length; i++) {
+        player.inventory[i] = {
+          ...(rpgGameItemData.find(m => m.name === player.inventory[i].name) || {}),
+          quantity: player.inventory[i].quantity || 1,
+        }
+      }
+      for(let i=0;i<player.skills.length;i++){
+        player.skills[i] = player.skills[i].isUnico?player.skills[i]:{
+          ...(rpgGameSkillData.find(m => m.name === player.skills[i].name) || {}),
+        }
+      }
+      Object.keys(player.equipment).forEach(k=>{
+        if(player.equipment[k]){
+          player.equipment[k] = player.equipment[k].isUnico?player.equipment[k]:JSON.parse(JSON.stringify(rpgGameEquipmentData.find(m=>m.name===player.equipment[k].name)||null))
+        }
+      })
+    }
+
+    // 渲染地图
+    function renderMap() {
+      elements.mapContainer.innerHTML = '';
+      gameData.locations.forEach(location => {
+        const locationEl = document.createElement('div');
+        locationEl.className = `map-location ${gameData.currentLocation === location.name ? 'active' : ''}`;
+        locationEl.textContent = location.name;
+        // 地图点击跳转
+        locationEl.addEventListener('click', () => {
+          if (gameData.currentLocation !== location.name) {
+            moveToLocation(location.name);
+          }
+        });
+        elements.mapContainer.appendChild(locationEl);
+      });
+    }
+
+    // 移动到新地点
+    function moveToLocation(locationName) {
+      gameData.currentLocation = locationName;
+      gameData.currentPlaceIndex = gameData.locations.findIndex(location => location.name === locationName);
+      elements.location.textContent = `当前位置: ${locationName}`;
+
+      // 随机遭遇敌人（30%几率）
+      if (Math.random() < 0.3) {
+        startCombat();
+      } else {
+        gameData.currentEvent = {
+          title: "抵达新地点",
+          description: `你成功抵达了${locationName}，暂时没有发现敌人。`,
+          actions: [
+            { text: "探索区域", type: "explore" },
+            { text: "休息恢复", type: "rest" },
+            gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+            gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+          ].filter(Boolean)
+        };
+      }
+
+      renderMap();
+      updateUI();
+    }
+
+    // 更新UI
+    function updateUI() {
+      // 更新事件面板
+      elements.eventTitle.textContent = gameData.currentEvent.title;
+      elements.eventDescription.textContent = gameData.currentEvent.description;
+
+      // 清除现有按钮
+      elements.actionsContainer.innerHTML = '';
+
+      // 添加新按钮
+      gameData.currentEvent.actions.forEach(action => {
+        const button = document.createElement('button');
+        button.className = `action-btn ${action.type}`;
+        button.textContent = action.text;
+        // 行动点击
+        button.addEventListener('click', () => handleAction(action));
+        elements.actionsContainer.appendChild(button);
+      });
+
+      // 更新状态面板
+      elements.hpValue.textContent = gameData.player.hp;
+      elements.attackValue.textContent = gameData.player.attack;
+      elements.defendValue.textContent = gameData.player.defend;
+      elements.goldValue.textContent = gameData.player.gold;
+      elements.expValue.textContent = gameData.player.exp;
+      elements.levelValue.textContent = gameData.player.level;
+
+      // 更新经验条
+      const expPercent = (gameData.player.exp / gameData.player.nextLevelExp) * 100;
+      elements.expProgress.style.width = `${expPercent}%`;
+      elements.expText.textContent = `${gameData.player.exp}/${gameData.player.nextLevelExp}`;
+
+      // 更新装备
+      elements.equipmentContainer.innerHTML = '';
+      Object.values(gameData.player.equipment).forEach(item => {
+        if (item) {
+          let value = item.attack ? item.attack : item.defend ? item.defend : item.criticalRate ? `${item.criticalRate}% ${item.criticalDamage}%` : '';
+          const itemEl = document.createElement('div');
+          itemEl.title = item.description;
+          itemEl.className = 'item-card';
+          itemEl.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity equip">${value}</div>
+                    `;
+          elements.equipmentContainer.appendChild(itemEl);
+        }
+      });
+
+      // 更新背包
+      elements.inventoryContainer.innerHTML = '';
+      gameData.player.inventory.forEach(item => {
+        if (item.quantity > 0) {
+          const itemEl = document.createElement('div');
+          itemEl.title = item.description;
+          itemEl.className = 'item-card';
+          itemEl.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity">${item.quantity}</div>
+                    `;
+          // 背包物品点击事件
+          itemEl.addEventListener('click', () => useItem(item, !gameData.combat.active));
+          elements.inventoryContainer.appendChild(itemEl);
+        }
+      });
+
+      // 更新技能
+      elements.skillsContainer.innerHTML = '';
+      gameData.player.skills.forEach(playerSkill => {
+        let skill = playerSkill.isUnico
+          ? playerSkill
+          : rpgGameSkillData.find(m => m.name === playerSkill.name);
+        const skillEl = document.createElement('div');
+        let skillAttr = displaySkillAttrs(skill)
+        skillEl.title = skillAttr.description
+        skillEl.className = 'item-card';
+        skillEl.innerHTML = `
+                    <div class="item-icon">${skill.icon}</div>
+                    <div class="item-name">${skill.name}</div>
+                    <div class="item-quantity skill">${skillAttr.value}</div>
+                `;
+        elements.skillsContainer.appendChild(skillEl);
+      });
+
+      // 更新战斗面板（如果激活）
+      if (gameData.combat.active) {
+        elements.combatPanel.style.display = 'block';
+        updateCombatUI();
+      } else {
+        elements.combatPanel.style.display = 'none';
+      }
+    }
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 战斗按钮
+      document.getElementById('combat-attack').addEventListener('click', handlePlayerAttack);
+      document.getElementById('combat-skill').addEventListener('click', openSkillModal);
+      document.getElementById('combat-item').addEventListener('click', openItemModal);
+
+      // 模态框关闭按钮
+      elements.closeItemModal.addEventListener('click', () => elements.itemModal.style.display = 'none');
+      elements.closeSkillModal.addEventListener('click', () => elements.skillModal.style.display = 'none');
+
+      // 升级奖励选择
+      elements.levelupHp.addEventListener('click', () => selectLevelUpReward('hp'));
+      elements.levelupAttack.addEventListener('click', () => selectLevelUpReward('attack'));
+      elements.levelupSkill.addEventListener('click', () => selectLevelUpReward('skill'));
+
+      // 存档操作按钮
+      document.getElementById('save-btn').addEventListener('click', () => saveGame('local'));
+      document.getElementById('load-btn').addEventListener('click', () => loadLocalSave());
+      document.getElementById('export-btn').addEventListener('click', () => exportSave());
+      document.getElementById('import-btn').addEventListener('click', () => importSave());
+      document.getElementById('copy-save-btn').addEventListener('click', () => copySaveToClipboard());
+      document.getElementById('paste-save-btn').addEventListener('click', () => pasteSaveFromClipboard());
+
+      // 存档模态框按钮
+      elements.saveModalConfirm.addEventListener('click', handleSaveOperation);
+      elements.saveModalCancel.addEventListener('click', () => elements.saveModal.style.display = 'none');
+    }
+
+    // 查看所需是否满足
+    function checkRequire(require = {}) {
+      let result = {
+        done: true,
+      }
+      if (require.level) {
+        if (gameData.player.level < require.level) {
+          result.level = false;
+          result.done = false
+          return result
+        }
+      }
+      if(require.damage){
+        if(!gameData.player.currentGameStat){
+          result.hasAnyFightYet = false;
+          result.done = false
+          return result
+        }
+        if(require.damage.max){
+          if(gameData.player.currentGameStat.maxDamage < require.damage.max){
+            result.hasDamageOver = false;
+            result.done = false;
+            return result
+          }
+        }
+      }
+      if(require.location){
+        if(gameData.currentLocation !== require.location){
+          result.stayThatPlace = false;
+          result.done = false;
+          return result;
+        }
+      }
+      if (require.defeatList) {
+        if(!gameData.player.currentGameStat){
+          result.hasAnyFightYet = false;
+          result.done = false
+          return result
+        }
+        result.defeatResult = {}
+        if(!gameData.player.currentGameStat.history){
+          gameData.player.currentGameStat.history = []
+          result.noHistroy = false;
+          result.done = false;
+          return result
+        }
+        // debugger
+        gameData.player.currentGameStat.history.filter(his => {
+          return his.isVictory
+        }).forEach(m => {
+          let enemyName = m.enemy.name;
+          let matchIndex = require.defeatList.findIndex(dft => {
+            let name = typeof dft ==='object'?dft.name:dft;
+            return name  === enemyName
+          })
+          // debugger
+          if (matchIndex !== -1) {
+            result.defeatResult[enemyName] = true;
+            return true
+          }
+        })
+        result.hasDefeatAll = require.defeatList.every(dft => {
+          let name = typeof dft ==='object'?dft.name:dft;
+          return result.defeatResult[name]
+        })
+        if (!result.hasDefeatAll) {
+          result.done = false
+          return result
+        }
+      }
+      if (require.item) {
+        let tool = gameData.player.inventory.filter(m => {
+          return require.item.includes(m.name)
+        })
+        result.hasGottenAll = tool.length === require.item.length
+        if (!result.hasGottenAll) {
+          result.done = false
+          return result
+        }
+      }
+      // debugger
+      return result
+    }
+    // 处理玩家动作
+    function handleAction(action) {
+      switch (action.type) {
+        case 'goForward': {
+          const currentIndex = gameData.locations.findIndex(l => l.name === gameData.currentLocation);
+          if (currentIndex > 0) {
+            moveToLocation(gameData.locations[currentIndex - 1].name);
+          }
+          break;
+        }
+        case 'escape': {
+          // 移动到下一个位置
+          const currentIndex = gameData.locations.findIndex(l => l.name === gameData.currentLocation);
+          if (currentIndex < gameData.locations.length - 1) {
+            moveToLocation(gameData.locations[currentIndex + 1].name);
+          }
+          break;
+        }
+        case 'useItem': {
+          let itemUseableOutFight = gameData.player.inventory.filter(m => {
+            return (m.effectType !== 'damage' && m.effectType !== 'story')
+          })
+          if (itemUseableOutFight.length > 0) {
+            openItemModalForUseable(itemUseableOutFight, true)
+          } else {
+            gameData.currentEvent = {
+              title: "没有可用道具",
+              description: `你目前没有非战道具！`,
+              actions: [
+                { text: "搜索更多", type: "explore" },
+                // 如果生命值不满 且 拥有回复药
+                gameData.player.health < gameData.player.maxHealth
+                  ? { text: "休息回复", type: "rest" }
+                  : null,
+                { text: "继续前进", type: "escape" },
+                gameData.currentPlaceIndex > 0
+                  ? { text: "返回", type: "goForward" }
+                  : null,
+                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+              ].filter(Boolean)
+            };
+          }
+          break;
+        }
+        case 'startBattle': {
+          // 获取当前地点的敌人类型
+
+          // 从当前地点的敌人中随机选择一个
+          const enemyName = '路边王';
+          const enemyData = {
+
+            id: "RoadSideKing",
+            name: "路边王",
+            icon: "👿",
+            hp: 1e4,
+            maxHp: 1e4,
+            attack: 1e3,
+            defend: 3e2,
+            isBoss: true,
+            onFightStart: {
+              status: ['大恢复祝福']
+            },
+            onRoundStart: {
+              bigAttackDamage: 20,
+              bigHpRecover: 20,
+            },
+            onRound: {
+
+              status: {
+                player: { '中毒': 2 },
+                enemy: { '恢复祝福': 1 },
+              },
+              attack: 2,
+            },
+            onRoundEnd: {
+              absoluteDamage: 100,
+            },
+            onDeath:{
+              event:{
+                title: "一切都给本神陪葬吧！",
+                description: `路边王临死发出怒吼并向世界释放诅咒！`,
+                actions:[
+                  { text: '故事的最后', type: 'lastStory' }
+                ]
+              },
+            },
+            skill: [
+
+
+              '神血弹', '错误的神术', "路边魔啸"
+            ],
+            inventory: [
+              { name: '魔化药剂' },
+              { name: '神力结晶' },
+              { name: '镇国大炮' },
+            ],
+            status: [{ name: '大恢复祝福', value: 3 }],
+            equipment: {
+              weapon: {
+                name: '亵渎之杖',
+                attack: 1000,
+                bigAttack: 50,
+              },
+              armor: {
+                name: '染血星袍',
+                defend: 1000,
+                bigDefend: 100,
+              },
+              accessory: {
+                name: '染血神目',
+                criticalRate: 90,
+                criticalDamage: 90,
+              },
+            },
+          };
+
+          gameData.combat.enemy = { ...enemyData };
+          gameData.combat.active = true;
+          gameData.combat.log = [{ type: "info", text: `遭遇了${gameData.combat.enemy.name}！战斗开始！` }];
+
+          // 更新战斗事件
+          gameData.currentEvent = {
+            title: "遭遇敌人",
+            description: `你遭遇了路边王！准备战斗！`,
+            actions: []
+          };
+          setTimeout(()=>{
+            startPlayerRound()
+          },1000)
+          break;
+        };
+        
+        case "lastStory":{
+          let heRequire = {
+            level:50,
+            hp:2000,
+            skill:['大治疗术']
+          }
+            // 好结局
+          let dheRequire = {
+            skill:['木弹']
+          }
+          if(checkRequire(dheRequire)){
+            gameData.currentEvent = {
+              title: '结局：更好的未来',
+              description: '你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染，一直没有作用的技能木弹发挥了作用，将剩余所有污染吸收带劲，最后消失在了世间。勇者成功拯救了世界，污染被彻底清除！',
+              actions: [
+                { text: '查看统计', type: 'viewStat' },
+                { text: '下一局游戏', type: 'regame' }
+              ]
+            }
+            updateUI();
+            return
+          }else if(checkRequire(heRequire)){
+            gameData.currentEvent = {
+              title: '结局：一切将迎来好的结局',
+              description: '你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染。勇者成功拯救了世界！',
+              actions: [
+                { text: '查看统计', type: 'viewStat' },
+                { text: '下一局游戏', type: 'regame' }
+              ]
+            }
+            updateUI();
+            return
+          }else{
+            // 坏结局
+            gameData.currentEvent = {
+              title: '结局：污染的世界',
+              description: '你扑上前去，但无法阻止污染的神明残屑向外面扩散，泣玉发出光芒但无济于事，仿佛有什么存在发出一声叹息。一切都被污染了！',
+              actions: [
+                { text: '查看统计', type: 'viewStat' },
+                { text: '下一局游戏', type: 'regame' }
+              ]
+            }
+            updateUI();
+            return
+          }
+          break;
+        }
+        case 'viewStat':{
+          break;
+        }
+        case "regame":{
+          // if
+          sumPlayer({
+            sumType:'end-game'
+          })
+          // 地点 物品 技能 属性 等级 金币 经验 等设置为初始状态
+          // 所有钩子清零 状态清空 冷却 加成 清空 
+          // 
+          let baseData = JSON.parse(JSON.stringify(rpgGameBasePlayerData));
+          baseData.history = JSON.parse(JSON.stringify(gameData.player.history))
+          gameData.player = baseData;
+          gameData.currentLocation = '陷落的村庄'
+          gameData.currentPlaceIndex = 0
+          gameData.combat = JSON.parse(JSON.stringify(rpgGameBaseCombatData))
+          gameData.currentEvent = JSON.parse(JSON.stringify(rpgGameVeryStartEvent))
+          initData();
+          updateUI();
+          return;
+        }
+        case 'explore':
+          if (checkFinal()) {
+            gameData.currentEvent = {
+              title: '最终之战',
+              description: '路边王注意到了你，于是来到你面前，它不打算放任你了。你经历了很多，这一刻终于来临。',
+              actions: [
+                { text: '开始战斗', type: 'startBattle' }
+              ]
+            }
+            updateUI();
+            return
+          }
+          // 探索可能触发战斗或发现物品
+          if (Math.random() < 0.6) {
+            startCombat();
+          } else {
+            let foundItems = [
+              { id: "potion", name: "回复药", rate: 5 },
+              { id: "gold", name: "金币", rate: 5 },
+              { id: "bomb", name: "土炸药", rate: 5 },
+              { id: "box", name: "物品宝箱", rate: 1 }
+            ];
+            // 合并环境要求
+            let locIndex = gameData.locations.findIndex(loc => loc.name === gameData.currentLocation)
+            if (gameData.locations[locIndex] && gameData.locations[locIndex].explore) {
+              foundItems = [].concat(foundItems, gameData.locations[locIndex].explore.filter(m => {
+                return checkRequire(m.require).done
+              }))
+            }
+            const foundItem = foundItems.find(m => Math.random() * 100 < m.rate)
+            if (foundItem) {
+              // 添加到库存
+              if (foundItem.id === "gold") {
+                const goldAmount = Math.floor(Math.random() * 10) + 5;
+                gameData.player.gold += goldAmount;
+                gameData.currentEvent = {
+                  title: "发现宝藏",
+                  description: `你在探索时发现了${goldAmount}枚金币！`,
+                  actions: [
+                    { text: "搜索更多", type: "explore" },
+                    // 如果生命值不满 且 拥有回复药
+                    gameData.player.health < gameData.player.maxHealth
+                      ? { text: "休息回复", type: "rest" }
+                      : null,
+                    { text: "继续前进", type: "escape" },
+                    gameData.currentPlaceIndex > 0
+                      ? { text: "返回", type: "goForward" }
+                      : null,
+                    gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+                  ].filter(Boolean)
+                };
+              } else {
+                if(foundItem.type==='skill'){
+                  let theSkill = JSON.parse(JSON.stringify(rpgGameSkillData.find(m => m.name === foundItem.name) || null));
+                  // 添加到库存
+                  const oldIndex = gameData.player.skills.findIndex(skill => skill.name === theSkill.name);
+                  let oper = 'add'
+                  if(oldIndex!==-1){
+                    let cpareResult = compareSkill(theSkill, gameData.player.skills[oldIndex]||{});
+                    if(cpareResult.another){
+                      oper = 'add'
+                    }else if(cpareResult.new > cpareResult.old){
+                      oper = 'update'
+                    }else{
+                      oper = null;
+                    }
+                  }
+                  if(oper==='add'){
+                    gameData.player.skills.push(JSON.parse(JSON.stringify(theSkill)))
+                  }else if(oper==='update'){
+                    gameData.player.skills[index] = JSON.parse(JSON.stringify(theSkill))
+                  }
+
+                  gameData.currentEvent = {
+                    title: "发现技能",
+                    description: `你在探索时发现了技能${theSkill.name}！已自动比较和处理。`,
+                    actions: [
+                      { text: "搜索更多", type: "explore" },
+                      { text: "继续前进", type: "escape" },
+                      gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+                      gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+                    ].filter(Boolean)
+                  };
+                }else{
+                  let theItem = JSON.parse(JSON.stringify(rpgGameItemData.find(m => m.name === foundItem.name) || null));
+                  theItem.quantity = theItem.quantity || 1;
+                  // 添加到库存
+                  const existingItem = gameData.player.inventory.find(item => item.id === theItem.id);
+                  if (existingItem) {
+                    existingItem.quantity++;
+                  } else {
+                    gameData.player.inventory.push({
+                      ...theItem,
+                      quantity: 1
+                    });
+                  }
+
+                  gameData.currentEvent = {
+                    title: "发现物品",
+                    description: `你在探索时发现了一个${theItem.name}！`,
+                    actions: [
+                      { text: "搜索更多", type: "explore" },
+                      { text: "继续前进", type: "escape" },
+                      gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+                      gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+                    ].filter(Boolean)
+                  };
+                }
+              }
+            } else {
+              let result = gameData.uselessExploreResults.find(m => {
+                return Math.random() * 100 < m.rate;
+              }) || gameData.uselessExploreResults[0]
+              let title = result.name || "探索结果"
+              let description = result.name;
+              let isAlive = true
+              if (result.effect) {
+                if (result.effect.hp) {
+                  let hpBefore = gameData.player.hp
+                  if (result.effect.hp > 0) {
+                    gameData.player.hp = Math.min(gameData.player.hp + result.effect.hp, gameData.player.maxHp)
+                    // 统计受伤
+                    sumPlayer({
+                      sumType: 'hurt',
+                      isOutFight: true,
+                      source: { name: result.name },
+                      before: hpBefore,
+                      value: gameData.player.hp - hpBefore
+                    })
+                    description += `\n你获得了${result.effect.hp}点生命值！`
+                  } else {
+                    let hpBefore = gameData.player.hp
+                    gameData.player.hp = Math.max(gameData.player.hp + result.effect.hp, 0)
+                    description += `\n你损失了${Math.abs(result.effect.hp)}点生命值！`
+                    let dieCheck = handleUnitDie({
+                      damageType: 'absolute',
+                      method:result.name||'explore',
+                      methodName:'explore',
+                      explore:result,
+                      before:hpBefore,
+                      value:hpBefore,
+                      isOutFight:true
+                    },gameData.player,true)
+                    if(dieCheck.die){
+                      description += `\n你差点死了！`
+                      gameData.player.hp = Math.floor(gameData.player.maxHp * 0.15);
+                      isAlive = false;
+                    }
+                  }
+                }
+              }
+              gameData.currentEvent = {
+                title: title,
+                description: description,
+                actions: [
+                  { text: "搜索更多", type: "explore" },
+                  // 如果生命值不满 且 拥有回复药
+                  gameData.player.health < gameData.player.maxHealth
+                    ? { text: "休息回复", type: "rest" }
+                    : null,
+                  { text: "继续前进", type: "escape" },
+                  gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+                  gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+                ].filter(Boolean)
+              };
+            }
+          }
+          break;
+
+        case 'rest':
+          // 休息恢复生命值
+          const healAmount = Math.floor(gameData.player.maxHp * 0.4);
+          gameData.player.hp = Math.min(gameData.player.maxHp, gameData.player.hp + healAmount);
+
+          // 有几率遭遇敌人
+          const encounterChance = Math.random();
+
+          gameData.currentEvent = {
+            title: "休息恢复",
+            description: `你休息了一会儿，恢复了${healAmount}点生命值。${encounterChance < 0.3 ? "但休息时被敌人发现了！" : ""}`,
+            actions: [
+              { text: "搜索更多", type: "explore" },
+              { text: "再次休息", type: "rest" },
+              { text: "继续前进", type: "escape" },
+              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+            ].filter(Boolean)
+          };
+
+          // 遭遇敌人
+          if (encounterChance < 0.3) {
+            setTimeout(startCombat, 1500);
+          }
+          break;
+      }
+
+      updateUI();
+    }
+    function startPlayerRound(){
+      let thePlayer = gameData.player
+      if(thePlayer.onRoundStart){ // 这个配置优先于状态执行
+        if(!runUnitHook(thePlayer.onRoundStart,thePlayer).next){
+          return
+        }
+      }
+      // 状态   
+      if(thePlayer.status && thePlayer.status.length){
+        let stageStatusList = thePlayer.status.filter(m=>{
+          return m.autoOn === 'roundStart'
+        })
+        if(stageStatusList.length){
+          let isStatusNext 
+          for(let i=0;i<thePlayer.status.length;i++){
+            let status = thePlayer.status[i]
+            let nextCheck = statusActions(status,thePlayer,true)
+            if(!nextCheck.next){
+              return
+            }
+          }
+        }
+      }
+      return null;
+    }
+    function endPlayerRound(){
+      let result = {next:true}
+      let thePlayer = gameData.player
+      if(thePlayer.onRoundEnd){ // 这个配置优先于状态执行
+        if(!runUnitHook(thePlayer.onRoundEnd,thePlayer).next){
+          result.next = false
+          return result
+        }
+      }
+      if(thePlayer.status && thePlayer.status.length){
+        let stageStatusList = thePlayer.status.filter(m=>{
+          return m.autoOn === 'roundEnd'
+        })
+        if(stageStatusList.length){
+          let isStatusNext 
+          for(let i=0;i<thePlayer.status.length;i++){
+            let status = thePlayer.status[i]
+            let nextCheck = statusActions(status,thePlayer,true)
+            if(!nextCheck.next){
+              result.next = false
+              return result
+            }
+          }
+        }
+      }
+      return result;
+    }
+    function startEnemyRound(){
+      let result = {next:true,}
+      const theCombat = gameData.combat
+      if(!theCombat.active){
+        result.next=false
+        return result;
+      }
+      let theEnemy = theCombat.enemy
+      if(theEnemy.onRoundStart){
+        if(!runUnitHook(theEnemy.onRoundStart,theEnemy).next){
+          result.next=false
+          return result
+        }
+      }
+      if(theEnemy.status && theEnemy.status.length){
+        let stageStatusList = theEnemy.status.filter(m=>{
+          return m.autoOn === 'roundStart'
+        })
+        if(stageStatusList.length){
+          let isStatusNext 
+          for(let i=0;i<theEnemy.status.length;i++){
+            let status = theEnemy.status[i]
+            let nextCheck = statusActions(status,theEnemy,false)
+            if(!nextCheck.next){
+              result.next = false;
+              return result
+            }
+          }
+        }
+      }
+      return result;
+    }
+    function endEnemyRound(){
+      let result = {next:true,}
+      const theCombat = gameData.combat
+      if(!theCombat.active){
+          result.next=false
+          return result
+      }
+      let theEnemy = theCombat.enemy
+      if(theEnemy.onRoundEnd){
+        if(!runUnitHook(theEnemy.onRoundEnd,theEnemy).next){
+          result.next=false
+          return result
+        }
+      }
+      if(theEnemy.status && theEnemy.status.length){
+        let stageStatusList = theEnemy.status.filter(m=>{
+          return m.autoOn === 'roundEnd'
+        })
+        if(stageStatusList.length){
+          let isStatusNext 
+          for(let i=0;i<theEnemy.status.length;i++){
+            let status = theEnemy.status[i]
+            let nextCheck = statusActions(status,theEnemy,false)
+            if(!nextCheck.next){
+              result.next=false
+              return result
+            }
+          }
+        }
+      }
+      return result;
+    }
+    // 游戏终结条件判断
+    function checkFinal() {
+      // 击败 路边一条龙 路边大四喜
+      // 造成过 100以上的单次伤害
+      // 持有物品 泣玉
+      // 处于国都 
+      
+      let require = {
+        defeatList:['路边一条龙','路边大四喜'],
+        item:['泣玉'],
+        damage:{
+          max:100,
+        },
+        location:'国都',
+      }
+      let checkResult = checkRequire(require)
+      return checkResult.done
+    };
+
+    // 开始战斗
+    function startCombat() {
+      // 获取当前地点的敌人类型
+      const currentLocation = gameData.locations.find(l => l.name === gameData.currentLocation);
+      const locationEnemies = currentLocation.enemies;
+
+      // 从当前地点的敌人中随机选择一个
+      const enemyName = locationEnemies[Math.floor(Math.random() * locationEnemies.length)];
+      const enemyData = rpgGameEnemyData.find(e => e.name === enemyName);
+
+      gameData.combat.enemy = { ...JSON.parse(JSON.stringify(enemyData)) };
+      gameData.combat.active = true;
+      gameData.combat.log = [{ type: "info", text: `遭遇了${gameData.combat.enemy.name}！战斗开始！` }];
+
+      // 更新战斗事件
+      gameData.currentEvent = {
+        title: "遭遇敌人",
+        description: `你遭遇了${gameData.combat.enemy.name}！准备战斗！`,
+        actions: []
+      };
+
+      updateUI();
+    }
+
+    // 更新战斗UI
+    function updateCombatUI() {
+      if (!gameData.combat.enemy) return;
+
+      // 更新玩家状态
+      const playerHpPercent = (gameData.player.hp / gameData.player.maxHp) * 100;
+      elements.playerHpBar.style.width = `${playerHpPercent}%`;
+      elements.playerHpText.textContent = `${gameData.player.hp}/${gameData.player.maxHp}`;
+
+      // 更新敌人状态
+      elements.enemyIcon.textContent = gameData.combat.enemy.icon;
+      elements.enemyName.textContent = gameData.combat.enemy.name;
+      const enemyHpPercent = (gameData.combat.enemy.hp / gameData.combat.enemy.maxHp) * 100;
+      elements.enemyHpBar.style.width = `${enemyHpPercent}%`;
+      elements.enemyHpText.textContent = `${gameData.combat.enemy.hp}/${gameData.combat.enemy.maxHp}`;
+
+      // 更新战斗日志
+      elements.combatLog.innerHTML = '';
+      gameData.combat.log.forEach(entry => {
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry ${entry.type}`;
+        logEntry.textContent = entry.text;
+        elements.combatLog.appendChild(logEntry);
+      });
+      elements.combatLog.scrollTop = elements.combatLog.scrollHeight;
+    }
+
+    // 处理玩家攻击
+    function handlePlayerAttack() {
+      if (!gameData.combat.active || !gameData.combat.enemy) return;
+
+      // 计算伤害（考虑攻击力和防御力）
+      let baseDamage = pickUnitAttack(gameData.player);
+      let criticResult = criticValue(baseDamage, gameData.player)
+      let isCritic = criticResult.isCritic
+      baseDamage = criticResult.value;
+
+      let playerDamage = baseDamage;
+      if(gameData.player.attackDamageType!=='absolute'){
+        playerDamage = hurtUnit(playerDamage, gameData.combat.enemy)
+      }
+      let enemyHpBefore = gameData.combat.enemy.hp;
+      gameData.combat.enemy.hp -= playerDamage;
+      // 统计伤害
+      sumPlayer({
+        sumType: 'damage',
+        damageType: gameData.player.attackDamageType||'normal',
+        isPlayerRound: true,
+        value: playerDamage,
+        isCritic,
+      })
+
+      // 添加战斗日志
+      gameData.combat.log.push({
+        type: "player",
+        text: `${isCritic ? '暴击了！' : ''}你对${gameData.combat.enemy.name}造成了${playerDamage}点伤害！`
+      });
+
+
+
+      // 检查敌人是否被击败
+      let dieCheck = handleUnitDie({
+        method:'attack',
+        methodName:'attack',
+        attack:gameData.player.attack,
+        before:enemyHpBefore,
+        value:enemyHpBefore,
+      },gameData.combat.enemy,false)
+
+      if (!dieCheck.next) {
+        return
+      }
+      let endResult = endPlayerRound()
+      if(!endResult.next){
+        return
+      }
+      // 敌人反击
+      setTimeout(() => {
+        runEnemyRoundAction()
+      }, 1000);
+
+      updateCombatUI();
+    }
+
+    // 打开道具选择模态框
+    function openItemModal() {
+      elements.itemModalGrid.innerHTML = '';
+
+      gameData.player.inventory.forEach(item => {
+        if (item.quantity > 0) {
+          const itemEl = document.createElement('div');
+          itemEl.title = item.description;
+          itemEl.className = 'item-card';
+          itemEl.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity">${item.quantity}</div>
+                    `;
+          // 物品对话框道具点击
+          itemEl.addEventListener('click', () => {
+            useItem(item, !gameData.combat.active);
+            elements.itemModal.style.display = 'none';
+          });
+          elements.itemModalGrid.appendChild(itemEl);
+        }
+      });
+
+      elements.itemModal.style.display = 'flex';
+    }
+
+    // 使用道具
+    function useItem(item, isOutFight = false,isBySkill=false) {
+      if (item.effectType === 'heal') {
+
+        let hpBefore = gameData.player.hp;
+        let healAmount;
+        if (item.effect.hp) {
+          // 治疗道具
+          healAmount = item.effect.hp;
+
+        } else if (item.effect.bigHp) {
+          // 大回复药
+          healAmount = Math.ceil(item.effect.bigHp / 100 * gameData.player.maxHp);
+
+        } else {
+          healAmount = 10
+        }
+
+        let criticResult = criticValue(healAmount, gameData.player)
+        let isCritic = criticResult.isCritic
+        healAmount = criticResult.value;
+
+        if(!isBySkill){
+          // 消耗恢复道具
+          item.quantity--;
+        }
+        // 恢复生命值
+        gameData.player.hp = Math.min(gameData.player.maxHp, gameData.player.hp + healAmount);
+
+        // 统计生命值恢复
+        sumPlayer({
+          sumType: 'heal',
+          method: item.name || 'item',
+          item,
+          healType: 'normal',
+          isOutFight,
+          isPlayerRound: !isOutFight,
+          source: gameData.player,
+          fullValue: healAmount,
+          value: gameData.player.hp - hpBefore,
+          isCritic,
+        })
+
+        let announce = `你使用了${item.name}，${isCritic ? '暴击了！' : ''}恢复了${healAmount}点生命值！`
+        if (!isOutFight && gameData.combat.active) {
+          // 战斗提示语更新
+          gameData.combat.log.push({
+            type: "heal",
+            text: announce,
+          });
+          updateCombatUI();
+        } else {
+          // 非战斗 事件更新
+          gameData.currentEvent = {
+            title: "使用道具",
+            description: announce,
+            actions: [
+              { text: "冒险探索", type: "explore" },
+              { text: "休息", type: "rest" },
+              { text: "继续前进", type: "escape" },
+              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+            ].filter(Boolean)
+          };
+        }
+
+      } else if (item.effectType === 'damage') {
+
+        if (!gameData.combat.active) { // 非战场景禁用伤害类道具
+          gameData.currentEvent.description += `当前情景不可使用${item.name}！`
+          updateUI();
+          return
+        }
+        let damageAmount;
+        let goldBefore = gameData.player.gold
+        let hpBefore = gameData.player.hp
+        let expBefore = gameData.player.exp
+        let costInfo = {goldBefore,hpBefore,expBefore}
+
+        // 伤害类物品消耗
+        if (item.effect.damangeCost) {
+          // 消耗金币的道具
+          if (item.effect.damangeCost.gold) {
+            let goldCost = item.effect.damangeCost.gold
+            let gcType = typeof goldCost;
+            let lackAnounce = `这次你没有足够的金币来使用${item.name}！`;
+
+            if (gcType === 'number') {
+
+            } else if (gcType === 'string') {
+              if (goldCost === 'all') {
+
+                gameData.player.gold = 0;
+                let goldAfter = gameData.player.gold
+                goldCost = goldBefore - goldAfter
+
+              } else if (goldCost === 'half') {
+
+                gameData.player.gold -= Math.floor(gameData.player.gold / 2);
+                let goldAfter = gameData.player.gold
+                goldCost = goldBefore - goldAfter
+
+              } else if (goldCost.includes('random')) {
+
+                let max = +goldCost.replace('random', '')
+                goldCost = Math.floor(Math.random() * (max || 20));
+                lackAnounce += '也许你可以再次尝试！';
+
+              } else {
+
+                goldCost = Math.floor(Math.random() * goldBefore / 2)
+
+              }
+            }
+
+
+            if (goldCost > goldBefore) {
+
+              gameData.combat.log.push({
+                type: "player",
+                text: lackAnounce,
+              });
+              updateCombatUI();
+              return
+            } else {
+              costInfo.goldCost = goldCost
+              // 消耗金币
+              gameData.player.gold -= goldCost;
+              // 统计金币消耗量
+              sumPlayer({
+                sumType: 'gold',
+                changeType: 'decrease',
+                stat_level: 'game',
+                method: 'itemCost',
+                item: item,
+                isOutFight,
+                before: goldBefore,
+                value: goldCost,
+              })
+            }
+          };
+          // 消耗消耗百分比金币的道具
+          if (item.effect.damangeCost.bigGold) {
+            let goldCost = item.effect.damangeCost.bigGold
+            let gcType = typeof goldCost;
+            let goldBefore = gameData.player.gold
+            let lackAnounce = `这次你没有足够的金币来使用${item.name}！`;
+            goldCost = Math.floor(goldBefore * (goldCost/100))
+            
+            
+            if (goldCost > goldBefore) {
+
+              gameData.combat.log.push({
+                type: "player",
+                text: lackAnounce,
+              });
+              updateCombatUI();
+              return
+            } else {
+              costInfo.goldCost = goldCost
+              // 消耗金币
+              gameData.player.gold -= goldCost;
+              // 统计金币消耗量
+              sumPlayer({
+                sumType: 'gold',
+                changeType: 'decrease',
+                stat_level: 'game',
+                method: 'itemCost',
+                item: item,
+                isOutFight,
+                before: goldBefore,
+                value: goldCost,
+              })
+            }
+          };
+          // 消耗血量的道具 需要保证扣除消耗玩家还活着
+          if (item.effect.damangeCost.hp) {
+
+            let hpCost = item.effect.damangeCost.hp
+            let hpType = typeof hpCost;
+            let hpBefore = gameData.player.hp;
+            let lackAnounce = `你没有足够的生命值来使用${item.name}！`;
+
+            if (hpType === 'number') {
+
+            } else if (hpType === 'string') {
+
+              if (hpCost === 'all') {
+
+                hpCost = hpBefore
+                gameData.player.hp = 0;
+                item.quantity--
+                // 统计死亡 应包含死亡造成的伤害统计
+                sumPlayer({
+                  sumType: 'dead',
+                  stat_level: 'game',
+                  method: 'itemCost',
+                  item: item,
+                  isOutFight,
+                  hpBefore,
+                  value: hpCost, // 致死伤害
+                })
+                endCombat(false);
+                return;
+
+              } else if (hpCost === 'half') {
+
+                hpCost = hpBefore - Math.floor(gameData.player.hp / 2);
+
+              } else if (hpCost.includes('random')) {
+
+                let max = +hpCost.replace('random', '')
+                hpCost = Math.floor(Math.random() * (max || 20));
+
+              } else {
+
+                hpCost = Math.floor(Math.random() * hpBefore / 2)
+
+              }
+            }
+            if (hpCost >= gameData.player.hp) {
+              gameData.combat.log.push({
+                type: "player",
+                text: lackAnounce
+              });
+              updateCombatUI();
+              return
+            } else {
+              costInfo.hpCost = hpCost
+              gameData.player.hp -= hpCost;
+              // 统计生命值减少量
+              sumPlayer({
+                sumType: 'hp',
+                changeType: 'decrease',
+                value: hpCost,
+                method: 'itemCost',
+                item: item,
+                isOutFight,
+                before: hpBefore,
+              })
+            }
+          }
+          // 消耗经验的道具
+          if (item.effect.damangeCost.exp) {
+
+            let expCost = item.effect.damangeCost.exp
+            let expType = typeof expCost;
+            let expBefore = gameData.player.exp;
+            let lackAnounce = `你没有足够的经验值来使用${item.name}！`
+            if (expType === 'number') {
+
+            } else if (expType === 'string') {
+              if (expCost === 'all') {
+
+                expCost = expBefore
+
+              } else if (expCost === 'half') {
+
+                expCost = expBefore - Math.floor(gameData.player.exp / 2);
+
+              } else if (expCost.includes('random')) {
+
+                let max = +expCost.replace('random', '')
+                expCost = Math.floor(Math.random() * max);
+                lackAnounce += '也许你可以再次尝试！'
+
+              } else {
+
+                expCost = Math.floor(Math.random() * (expBefore / 2));
+
+              }
+            }
+            if (expCost > gameData.player.exp) {
+              gameData.combat.log.push({
+                type: "player",
+                text: lackAnounce,
+              });
+              updateCombatUI();
+              return
+            } else {
+              costInfo.expCost = expCost
+              gameData.player.exp -= expCost;
+              // 统计经验值减少量
+              sumPlayer({
+                sumType: 'exp',
+                changeType: 'decrease',
+                stat_level: 'game',
+                method: 'itemCost',
+                item: item,
+                isOutFight,
+                expBefore,
+                value: expCost,
+              })
+            }
+          }
+        }
+        if (item.effect.damage) {
+          if (!isOutFight) {// 非战斗不可使用伤害道具
+            
+            // 伤害道具（如炸弹）
+            damageAmount = item.effect.damage;
+          };
+        } else if (item.effect.bigDamage) {
+          // 
+          let base = pickUnitAttack(gameData.player)
+          damageAmount = base * (item.effect.bigDamage / 100)
+
+        }else if(item.effect.bigGoldDamage){
+          let goldValue = costInfo.goldBefore;
+          damageAmount = goldValue * item.effect.bigGoldDamage/100
+        }
+        let criticResult = criticValue(damageAmount, gameData.player)
+        damageAmount = criticResult.value
+        let isCritic = criticResult.isCritic;
+
+        // 消耗伤害道具
+        item.quantity--
+        // 道具效果 对敌人造成伤害
+        if(item.effect.damageType!=='absolute'){
+          damageAmount = hurtUnit(damageAmount, gameData.combat.enemy)
+        }
+        // 统计伤害
+        sumPlayer({
+          sumType: 'damage',
+          method: 'item', // 伤害手段
+          damageType: item.effect.damageType || 'normal',
+          isOutFight: false,
+          isPlayerRound: true,
+          value: damageAmount,
+          target: gameData.combat.enemy,
+          isCritic,
+        })
+        let enemyHpBefore = gameData.combat.enemy.hp;
+        gameData.combat.enemy.hp -= damageAmount;
+        gameData.combat.log.push({
+          type: "player",
+          text: `你使用了${item.name}，${isCritic ? '暴击了！' : ''}对${gameData.combat.enemy.name}造成了${damageAmount}点伤害！`
+        });
+
+
+        // 检查敌人是否被击败
+        let dieCheck = handleUnitDie({
+          method:item.name || 'item',
+          methodName:'item',
+          item,
+          before:enemyHpBefore,
+          value:enemyHpBefore,
+        },gameData.combat.enemy,false)
+
+        if (!dieCheck.next) {
+          return;
+        }
+
+        let endResult = endPlayerRound()
+        if(!endResult.next){
+          return
+        }
+        // 敌人反击
+        setTimeout(() => {
+          runEnemyRoundAction()
+        }, 1000);
+
+        updateCombatUI();
+      } else if (item.effectType === 'enPower') {
+
+        if (item.effect.attack) {
+          // 强化道具
+          gameData.player.statusEffects.push({
+            type: 'attack',
+            value: item.effect.attack,
+            duration: item.effect.duration,
+            name: `${item.name}效果`
+          });
+          let oldValue = gameData.player.attack;
+          gameData.player.attack += item.effect.attack;
+
+          // 统计属性 
+          sumPlayer({
+            sumType: 'prop',
+            stat_level: 'game',
+            prop: 'attack',
+            changeType: 'increase',
+            method: 'item',
+            item: item,
+            isOutFight,
+            value: item.effect.attack,
+            before: oldValue,
+          })
+
+          if (!isOutFight && gameData.combat.active) {
+            gameData.combat.log.push({
+              type: "info",
+              text: `你使用了${item.name}，攻击力提升了${item.effect.attack}点！`
+            });
+            updateCombatUI();
+          } else {
+            gameData.currentEvent = {
+              title: "使用道具",
+              description: `你使用了${item.name}，攻击力提升了${item.effect.attack}点！`,
+              actions: [
+                { text: "冒险探索", type: "explore" },
+                { text: "休息", type: "rest" },
+                { text: "继续前进", type: "escape" },
+                gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+              ].filter(Boolean)
+            };
+          }
+        }
+
+        // 减少加成道具数量
+        item.quantity--;
+      } else if (item.effectType === 'box') {
+        if (item.quantity > 0 || isBySkill) {
+          if(!isBySkill){
+            // 消耗箱子数量
+            item.quantity--
+          }
+          let allResults = []
+          let quoteList = []
+          let receiver = []
+          if (item.id === 'item-box') {
+            allResults = rgpGameCommonItemBoxResults
+            quoteList = rpgGameItemData
+            receiver = gameData.player.inventory
+          } else if (item.id === 'skill-box') {
+            allResults = rgpGameCommonSkillBoxResults
+            quoteList = rpgGameSkillData
+            receiver = gameData.player.skills
+          }
+          // 获取箱子重的物品
+          let ones = allResults.filter(m => {
+            return Math.random() * 100 < m.rate;
+          }).map(m => {
+            return quoteList.find(item => {
+              return item.name === m.name;
+            })
+          }).filter(Boolean);
+          ones.forEach(one => {
+            let matchIndex = receiver.findIndex(m => {
+              return m.name === one.name
+            })
+            if (matchIndex !== -1) {
+              if (item.id === 'item-box') {
+                receiver[matchIndex].quantity++
+              } else if (item.id === 'skill-box') {
+                receiver[matchIndex] = one
+              }
+            } else {
+              receiver.push(one)
+            }
+          })
+          //  to do  统计开箱结果
+          // to do 如果获得了什么 统计物品获得与持有最大数量
+          let announce = `你使用了${item.name}，${ones.length ? `获得了${ones.map(m => m.name).join('，')}！` : '什么也没得到！'}`
+          if (!isOutFight) {
+            gameData.combat.log.push({
+              type: "player",
+              text: announce
+            });
+            updateCombatUI();
+          } else {
+            gameData.currentEvent = {
+              title: "开箱子",
+              description: announce,
+              actions: [
+                { text: "冒险探索", type: "explore" },
+                { text: "休息", type: "rest" },
+                { text: "继续前进", type: "escape" },
+                gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+              ].filter(Boolean)
+            };
+          }
+        }
+      }
+      updateUI();
+
+    }
+
+
+    // 打开道具选择模态框
+    function openItemModalForUseable(itemUseable = [], isOutFight = false) {
+      elements.itemModalGrid.innerHTML = '';
+
+      itemUseable.forEach(item => {
+        if (item.quantity > 0) {
+          const itemEl = document.createElement('div');
+          itemEl.title = item.description;
+          itemEl.className = 'item-card';
+          itemEl.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity">${item.quantity}</div>
+                    `;
+          // 指定道具的道具对话框道具点击
+          itemEl.addEventListener('click', () => {
+            useItem(item, isOutFight);
+            elements.itemModal.style.display = 'none';
+          });
+          elements.itemModalGrid.appendChild(itemEl);
+        }
+      });
+
+      elements.itemModal.style.display = 'flex';
+    }
+    function displaySkillAttrs(skill) {
+      let skillAttrs = []
+      let skillType = skill.skillType
+      let skillValue = ''
+      switch (skillType) {
+        case 'damage': {
+          let damageTypePart = rpgGameDamageTypeMapper[skill.damageType || 'normal']
+          let damagePart = ''
+          if (skill.damage) {
+
+            damagePart = `造成${skill.damage}的${damageTypePart}。`
+            skillValue = `${skill.damage} ${damageTypePart[0]}`
+
+          } else if (skill.bigAttackDamage) {
+
+            damagePart = `造成${skill.bigAttackDamage}%攻击力的${damageTypePart}。`
+            skillValue = `${skill.bigAttackDamage}%Atk ${damageTypePart[0]}`
+
+          } else if (skill.bigEnemyMaxHpDamage) {
+
+            damagePart = `造成${skill.bigEnemyMaxHpDamage}%敌方最大生命值的${damageTypePart}。`
+            skillValue = `${skill.bigEnemyMaxHpDamage}%敌MHP ${damageTypePart[0]}`
+
+          } else if (skill.bigGoldDamage) {
+
+            damagePart = `造成${skill.bigGoldDamage}%拥有金币数量的${damageTypePart}。`
+            skillValue = `${skill.bigGoldDamage}%金 ${damageTypePart[0]}`
+
+          } else if (skill.randomDamage) {
+
+            damagePart = `随机造成 1 ~ ${skill.randomDamage} 的${damageTypePart}。`
+            skillValue = `${skill.randomDamage} ${damageTypePart[0]}`
+
+          }
+          skillAttrs.push(damagePart)
+          break;
+        }
+        case 'heal': {
+          let healPart = ``
+          if (skill.heal) {
+            healPart = `回复${skill.heal}点生命值。`
+            skillValue = `${skill.heal}`
+          } else if (skill.bigHeal) {
+            healPart = `回复${skill.bigHeal}%最大生命值的生命值。`
+            skillValue = `${skill.bigHeal}%Mx`
+          }
+          skillAttrs.push(healPart)
+          break;
+        }
+        case 'status': {
+          let statusPart = `给敌人施加${skill.status.value || 1}点"${skill.status.name}"状态`
+          skillValue = `${skill.status.value}`
+          skillAttrs.push(statusPart)
+          break;
+        }
+        case 'rule': {
+          let rulePart = skill.description
+          skillAttrs.push(rulePart)
+          break;
+        }
+      }
+      return {
+        description: skillAttrs.join(''),
+        value: skillValue,
+      }
+    }
+    // 打开技能选择模态框
+    function openSkillModal() {
+      elements.skillModalGrid.innerHTML = '';
+
+      gameData.player.skills.forEach(playerSkill => {
+        let skill = playerSkill
+        const skillEl = document.createElement('div');
+        let skillAttr = displaySkillAttrs(skill)
+        skillEl.title = skillAttr.description
+        skillEl.className = 'item-card';
+        skillEl.innerHTML = `
+                    <div class="item-icon">${skill.icon}</div>
+                    <div class="item-name">${skill.name}</div>
+                    <div class="item-quantity skill">${skillAttr.value}</div>
+                `;
+        // 对话框 技能点击
+        skillEl.addEventListener('click', () => {
+          useSkill(skill);
+          elements.skillModal.style.display = 'none';
+        });
+        elements.skillModalGrid.appendChild(skillEl);
+      });
+
+      elements.skillModal.style.display = 'flex';
+    }
+    // =============
+    //     统计
+    // =============
+    function sumPlayerCurrentGame() {
+      const stat_level = 'game'
+      let options = arguments[0]
+      // sum game
+      if (!gameData.player.currentGameStat) {
+        gameData.player.currentGameStat = {}
+      }
+      const statObj = gameData.player.currentGameStat
+      if(options.sumType==='end-game'){
+        return handleCommonUnitSum(options,gameData.player,'game')
+      }
+      let shouldStatFight = options.isOutFight !== true && !['end-combat', 'end-game'].includes(options.sumType)
+      if (shouldStatFight) {
+        sumPlayerCurrentFight(options);
+      }
+      if (options.sumType !== 'end-round') {// 保证end-xxx  不重复统计
+        handleCommonUnitSum(options, statObj, stat_level)
+      }
+
+    }
+    function sumPlayerCurrentFight() {
+      const stat_level = 'combat'
+      let options = arguments[0]
+      if (!gameData.player.currentGameStat.currentFightStat) {
+        gameData.player.currentGameStat.currentFightStat = {}
+      }
+      const statObj = gameData.player.currentGameStat.currentFightStat
+      let shouldStatRound = options.isPlayerRound !== false && !['end-round', 'end-combat', 'end-game'].includes(options.sumType)
+      if (shouldStatRound) {
+        sumPlayerCurrentRound(options);
+      }
+      handleCommonUnitSum(options, statObj)
+    }
+    function sumPlayerCurrentRound(options = {}) {
+      const stat_level = 'round'
+      // sum current round
+      if (!gameData.player.currentGameStat.currentFightStat.currentRoundStat) {
+        gameData.player.currentGameStat.currentFightStat.currentRoundStat = {}
+      }
+      const statObj = gameData.player.currentGameStat.currentFightStat.currentRoundStat
+      handleCommonUnitSum(options, statObj, stat_level)
+    }
+    function handleCommonUnitSum(options, unit, stat_level) {
+      switch (options.sumType) {
+        // 统计造成的伤害 总伤害 最大单次伤害 各类伤害各种总伤害、最大单次伤害
+        case 'damage': {
+          unit.damageSum = (unit.damageSum || 0) + options.value;
+          // damge 统计 max sum; typeMax typeSum
+          if (options.value > unit.maxDamage) {
+            unit.maxDamage = options.value
+            unit.maxDamageType = options.damageType;
+            unit.maxDamageTarget = JSON.parse(JSON.stringify(options.target || { name: 'enemy' }))
+            unit.isMaxDamageCritic = options.isCritic || false;
+          }
+          // 暴击伤害统计
+          if (options.isCritic) {
+            unit.criticDamageCount = (unit.criticDamageCount || 0) + 1;
+            unit.criticDamageSum = (unit.criticDamageSum || 0) + options.value;
+            unit.criticMaxDamage = Math.max(unit.criticMaxDamage || 0, options.value);
+            if (!unit.criticDamageList) {
+              unit.criticDamageList = []
+            }
+            unit.criticDamageList.push({
+              value: options.value,
+              type: options.damageType,
+              target: JSON.parse(JSON.stringify(options.target || 'enemy')),
+            })
+          }
+
+          // 次级统计 类型伤害
+          if (!unit.typeDamageStat) {
+            unit.typeDamageStat = []
+          }
+          let typeOneIndex = unit.typeDamageStat.findIndex(m => m.type === options.damageType)
+          if (typeOneIndex > -1) {
+            if (options.value > unit.typeDamageStat[typeOneIndex].max) {
+              unit.typeDamageStat[typeOneIndex].max = options.value
+              unit.typeDamageStat[typeOneIndex].isMaxCritc = options.isCritic || false;
+            }
+            unit.typeDamageStat[typeOneIndex].sum += options.value
+          } else {
+            unit.typeDamageStat.push({
+              type: options.damageType,
+              max: options.value,
+              sum: options.value
+            })
+          }
+          break
+        };
+        // 统计受到的伤害 总承伤 最大单次承伤 各类伤害总承伤、最大单次承伤
+        case 'hurt': {
+          unit.hurtSum = (unit.hurtSum || 0) + options.value;
+
+          if (options.value > unit.maxHurt) {
+            unit.maxHurt = options.value
+            unit.maxHurtType = options.hurtType;
+            unit.maxHurtSource = JSON.parse(JSON.stringify(options.source || { name: 'enemy' }))
+          }
+
+          // 被暴击统计
+          if (options.isCritic) {
+            unit.criticHurtCount = (unit.criticHurtCount || 0) + 1;
+            unit.criticHurtSum = (unit.criticHurtSum || 0) + options.value;
+            unit.criticMaxHurt = Math.max(unit.criticMaxHurt || 0, options.value);
+            if (!unit.criticHurtList) {
+              unit.criticHurtList = []
+            }
+            unit.criticHurtList.push({
+              value: options.value,
+              type: options.hurtType,
+              source: JSON.parse(JSON.stringify(options.source || 'enemy'))
+            })
+          }
+
+          // 次级统计 类型伤害
+          if (!unit.typeHurtStat) {
+            unit.typeHurtStat = []
+          }
+          let typeOneIndex = unit.typeHurtStat.findIndex(m => m.type === options.hurtType)
+          if (typeOneIndex > -1) {
+            unit.typeHurtStat[typeOneIndex].max = Math.max(unit.typeHurtStat[typeOneIndex].max, options.value)
+            unit.typeHurtStat[typeOneIndex].sum += options.value
+          } else {
+            unit.typeHurtStat.push({
+              type: options.hurtType,
+              max: options.value,
+              sum: options.value
+            })
+          }
+          break
+        };
+        // 统计治疗量
+        case 'heal': {
+          unit.healSum = (unit.healSum || 0) + options.value;
+
+          if (options.value > unit.maxHeal) {
+            unit.maxHeal = options.value
+            unit.maxHealType = options.healType;
+            unit.maxHealTarget = JSON.parse(JSON.stringify(options.target || { name: 'enemy' }))
+          }
+          break
+        };
+        case 'prop': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (!unit.propStatList) {
+            unit.propStatList = []
+          }
+          let index = unit.propStatList.findIndex(m => {
+            return m.prop = options.prop;
+          })
+          if (index !== -1) {
+            unit.propStatList[index].count += 1
+            unit.propStatList[index].sum += options.value
+            unit.propStatList[index].max = Math.max(unit.propStatList[index].max, options.value);
+          } else {
+            unit.propStatList.push({
+              prop: options.prop,
+              count: 1,
+              sum: options.value,
+              max: options.value
+            })
+          }
+          break;
+        }
+        // 生命消耗
+        case 'hp': {
+          if (options.changeType === 'increase') {
+            unit.hpGainSum = (unit.hpGainSum || 0) + options.value;
+            unit.hpGainMax = Math.max(unit.hpGainMax || 0, options.value);
+          } else if (options.changeType === 'decrease') {
+            unit.hpCostCount = (unit.expCost || 0) + 1
+            unit.hpCostSum = (unit.hpCostSum || 0) + options.value;
+            unit.hpCostMax = Math.max(unit.hpCostMax || 0, options.value);
+          }
+          break;
+        }
+        // 魔法值变动
+        case 'mp': {
+          if (options.changeType === 'increase') {
+            unit.mpGainSum = (unit.mpGainSum || 0) + options.value;
+            unit.mpGainMax = Math.max(unit.mpGainMax || 0, options.value);
+          } else if (options.changeType === 'decrease') {
+            unit.mpCostCount = (unit.expCost || 0) + 1
+            unit.mpCostSum = (unit.mpCostSum || 0) + options.value;
+            unit.mpCostMax = Math.max(unit.mpCostMax || 0, options.value);
+          }
+          break;
+        }
+        case 'gold': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (options.changeType === 'increase') {
+            unit.goldGainSum = (unit.goldGainSum || 0) + options.value;
+            unit.goldGainMax = Math.max(unit.goldGainMax || 0, options.value);
+          } else if (options.changeType === 'decrease') {
+            unit.goldCostCount = (unit.expCost || 0) + 1
+            unit.goldCostSum = (unit.goldCostSum || 0) + options.value;
+            unit.goldCostMax = Math.max(unit.goldCostMax || 0, options.value);
+          }
+          break;
+        }
+        case 'exp': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (options.changeType === 'increase') {
+            unit.expGainSum = (unit.expGainSum || 0) + options.value;
+            unit.expGainMax = Math.max(unit.expGainMax || 0, options.value);
+          } else if (options.changeType === 'decrease') {
+            unit.expCostCount = (unit.expCost || 0) + 1
+            unit.expCostSum = (unit.expCostSum || 0) + options.value;
+            unit.expCostMax = Math.max(unit.expCostMax || 0, options.value);
+          }
+          break;
+        }
+        case 'item': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (!unit.itemStatList) {
+            unit.itemStatList = []
+          }
+          let index = unit.itemStatList.findIndex(m => m.name === options.name);
+          let quickStore = JSON.parse(JSON.stringify(options.item || null))
+          if (index !== -1) {
+            let one = unit.itemStatList[index];
+            one.detailList.push(quickStore)
+            one.count++;
+          } else {
+            unit.itemStatList.push({
+              name: options.name,
+              detailList: [quickStore],
+              count: 1,
+            })
+          }
+          break;
+        }
+        case 'skill': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (!unit.skillStatList) {
+            unit.skillStatList = []
+          }
+          let index = unit.skillStatList.findIndex(m => m.name === options.name);
+          let quickStore = JSON.parse(JSON.stringify(options.skill || null))
+          if (index !== -1) {
+            let one = unit.skillStatList[index];
+            one.detailList.push(quickStore)
+            one.count++;
+          } else {
+            unit.skillStatList.push({
+              name: options.name,
+              detailList: [quickStore],
+              count: 1,
+            })
+          }
+          break;
+        }
+        case 'equipment': {
+          // 仅游戏级统计记录本项目
+          if (stat_level !== 'game') { break }
+          if (!unit.equipmentStatList) {
+            unit.equipmentStatList = []
+          }
+          let index = unit.equipmentStatList.findIndex(m => m.name === options.name);
+          let quickStore = JSON.parse(JSON.stringify(options.equipment || null))
+          if (index !== -1) {
+            let one = unit.equipmentStatList[index];
+            one.detailList.push(quickStore)
+            one.count++;
+          } else {
+            unit.equipmentStatList.push({
+              name: options.name,
+              detailList: [quickStore],
+              count: 1,
+            })
+          }
+          break;
+        }
+        // 统计击杀
+        case 'defeat': {
+          // 仅游戏级别统计击杀
+          if (stat_level !== 'game') { break }
+          if (!unit.defeatList) {
+            unit.defeatList = []
+          }
+          let index = unit.defeatList.findIndex(dft => {
+            return dft.name === options.target.name
+          })
+          let detailCell = {
+            target: options.target,
+            method: options.method,
+            item: options.item || null,
+            skill: options.skill || null,
+          }
+          if (index !== -1) {
+            unit.defeatList[index].count++
+            unit.defeatList[index].detail.push(detailCell)
+            let mcIndex = unit.defeatList[index].methodCounts.findIndex(m => m.method === options.method)
+            if (mcIndex !== -1) {
+              unit.defeatList[index].methodCounts[mcIndex].count++
+            } else {
+              unit.defeatList[index].methodCounts.push({ method: options.method, count: 1 })
+            }
+          } else {
+            unit.defeatList.push({
+              name: options.target.name,
+              count: 1,
+              detail: [detailCell],
+              methodCounts: [{ method: options.method, count: 1 }]
+            })
+          }
+          break
+        };
+        // 结束游戏的统计模块操作
+        case 'end-game': { // 结束游戏 unit 为 全局对象
+          if (unit.currentFightStat) {
+            sumPlayer({ ...options, sumType: 'end-combat' })
+          }
+          if (!unit.history) {
+            unit.history = []
+          }
+          unit.history.push(unit.currentGameStat)
+          unit.currentGameStat = null;
+          break;
+        }
+        case 'end-combat': { // 结束战斗 unit 为game级对象
+          if (stat_level !== 'game') { break }
+          // 回合未结束首先结束回合
+          if (unit.currentRoundStat) {
+            sumPlayer({ ...options, sumType: 'end-round' })
+          }
+          if (!unit.history) {
+            unit.history = []
+          }
+          let currentFightStat = unit.currentFightStat
+          currentFightStat.enemy = gameData.combat.enemy
+          currentFightStat.isVictory = gameData.combat.enemy.hp <= 0
+          unit.currentFightStat = null;
+          unit.history.push(currentFightStat)
+          break;
+        }
+        case 'end-round': { // 结束回合 unit为 combat 级对象
+          if (stat_level !== 'combat') { break }
+          if (!unit.history) {
+            unit.history = []
+          }
+          let currentRoundStat = unit.currentRoundStat
+          unit.currentRoundStat = null;
+          unit.history.push(currentRoundStat)
+          break;
+        }
+        case 'end-action': {
+          break;
+        }
+      }
+    }
+    // 统计玩家方有关数据记录 
+    function sumPlayer() {
+      let options = arguments[0] || []
+      if (options instanceof Array) {
+        options.forEach(opt => {
+          sumPlayer(opt)
+        })
+      } else {
+        sumPlayerCurrentGame(options);
+      }
+    }
+    // 执行阶段配置钩子对象 
+    function runUnitHook(hookConfig={},unit={},isPlayer=true){
+      let result = {next:true,}
+      // 生命值恢复
+      if(hookConfig.hpRecover){
+        /**
+         * ```txt
+         * 生命值恢复系列
+         * 核心 hpRecover:number;
+         * 其他 
+         * hpRecoverCount:number
+         * hpRecoverType:'bigHp' | 'bigMaxHp' | 'hp' // 默认为 hp 
+         * ```
+        */
+        let hpRecoverCount  = hookConfig.hpRecoverCount || 1
+        for(let i=0;i<hpRecoverCount;i++){
+          let before = unit.hp
+          let value = hookConfig.hpRecover
+          if(hookConfig.hpRecoverType === 'bigHp'){
+            value = hookConfig.hpRecover / 100 * unit.Hp
+          }else if(hookConfig.hpRecoverType === 'bigMaxHp'){
+            value = hookConfig.hpRecover / 100 * unit.maxHp
+          }
+          unit.hp = Math.min(unit.hp + value,unit.maxHp)
+          if(isPlayer){
+            // 统计生命值恢复
+            sumPlayer({
+              sumType:'hp',
+              changeType:'increase',
+              method:'hook',
+              hook:hookConfig,
+              before,
+              value:unit.hp - value
+            })
+          }
+          // 战斗日志
+          gameData.combat.log.push({
+            type:isPlayer?'player':'enemy',
+            text:`${isPlayer?"你":unit.name}恢复了${value}点生命值！`
+          })
+          updateCombatUI()
+        }
+      }
+      // 魔法值恢复
+      if(hookConfig.mpRecover){
+        /**
+         * ```txt
+         * 魔法值恢复系列
+         * 核心 mpRecover:number;
+         * 其他 
+         * mpRecoverCount:number
+         * mpRecoverType:'bigMp'| 'mp' // 默认为 mp 
+         * ```
+        */
+        let mpRecoverCount  = hookConfig.mpRecoverCount || 1
+        for(let i=0;i<mpRecoverCount;i++){
+          let before = unit.mp
+          let value = hookConfig.mpRecover
+          if(hookConfig.mpRecoverType === 'bigMp'){
+            value = hookConfig.mpRecover / 100 * unit.Hp
+          }
+          unit.mp += value;
+          if(isPlayer){
+            // 统计生命值恢复
+            sumPlayer({
+              sumType:'mp',
+              changeType:'increase',
+              method:'hook',
+              hook:hookConfig,
+              before,
+              value:unit.mp - value
+            })
+          }
+          // 战斗日志
+          gameData.combat.log.push({
+            type:isPlayer?'player':'enemy',
+            text:`${isPlayer?"你":unit.name}恢复了${value}点魔法值！`
+          })
+          updateCombatUI()
+        }
+      }
+      // 造成伤害
+      if(hookConfig.extraAttack){
+        /**
+         * ```txt
+         * 造成伤害系列
+         * 核心 extraAttack:number;
+         * 其他 
+         * extraAttackCount:number
+         * extraAttackType:'bigAttack'| 'attack'
+         * extraAttackDamageType: 伤害类型
+         * isExtraAttackCriticalable: 是否可以暴击
+         * isExtraAttackCritic 是否暴击
+         * ```
+        */
+        //  攻击目标
+        let targetUnit = isPlayer?gameData.combat.enemy:gameData.player;
+        let extraAttack = hookConfig.extraAttack;
+        let extraAttackCount = hookConfig.extraAttackCount || 1
+        let extraAttackDamageType = hookConfig.extraAttackDamageType || 'normal';
+        let extraAttackType = hookConfig.extraAttackType || 'attack';
+        let unitAttack = pickUnitAttack(unit)
+        for(let i=0;i<extraAttackCount;i++){
+          let et = extraAttack;
+          if(extraAttackType==='bigAttack'){
+            et = extraAttack / 100 * unitAttack;
+          }
+          if(extraAttackDamageType !== 'absolute'){ // 非绝对伤害 则考虑敌方配置
+            et = hurtUnit(et,targetUnit)
+          }
+          
+          let targetHpBefore = targetUnit.hp;
+          targetUnit.hp  -= et;
+          
+          // 战斗日志
+          gameData.combat.log.push({
+            type:isPlayer?'player':'enemy',
+            text:`${isPlayer?"你":unit.name}对${targetUnit.name}造成${value}点伤害！`
+          })
+          updateCombatUI()
+          
+          if(isPlayer){
+            // 统计造成的伤害
+            sumPlayer({
+              sumType:'damage',
+              damageType:extraAttackDamageType, // 伤害类型
+              value: et, // 统计基准值
+              isPlayerRound: true, // 是否是玩家回合
+              target: theEnemy, // 伤害目标
+            })
+          }else {
+            // 统计承伤
+            // 统计造成的伤害
+            sumPlayer({
+              sumType:'hurt',
+              hurtType:extraAttackDamageType, // 伤害类型
+              value: et, // 统计基准值
+              isPlayerRound: false, // 是否是玩家回合
+              source: theEnemy, // 伤害目标
+            })
+          }
+          let isDieInHook = handleUnitDie({
+            method:'hook',
+            methodName:'hookConfig',
+            hookConfig,
+            before:targetHpBefore,
+            value:targetHpBefore,
+          },target,!isPlayer)
+          if(!isDieInHook.next){
+            result.next = false
+            return result
+          }
+        }
+      }
+      
+      if(unit.name==='路边王' && unit.hp <=0){
+        // 玩家胜利
+        gameData.combat.log.push({
+          type: "info",
+          text: `你击败了${gameData.combat.enemy.name}！`
+        });
+
+        updateCombatUI();
+        // 延迟后关闭战斗
+        setTimeout(() => {
+          gameData.combat.active = false;
+          gameData.currentEvent = unit.onDeath.event
+          updateUI();
+        }, 2000);
+        result.next=false;
+        return result
+      }
+      return result;
+    }
+    function runEnemyRoundAction() {
+      let startResult = startEnemyRound()
+      if(!startResult.next){
+        return
+      }
+      let theEnemy = gameData.combat.enemy
+      gameData.combat.log.push({
+        type: "enemy",
+        text: `${theEnemy.name}的回合开始！`
+      });
+      if(!theEnemy.hasGotten1stRound){
+        if(theEnemy.onFightStart){
+          if(!runUnitHook(theEnemy.onFightStart,theEnemy,false).next){
+            return
+          }
+        }
+        theEnemy.hasGotten1stRound = true
+      }
+      if(theEnemy.onRoundStart){
+        if(!runUnitHook(theEnemy.onRoundStart,theEnemy,false).next){
+          return
+        }
+      }
+      let enemyDamage = pickUnitAttack(theEnemy)
+      let playerHpBefore = gameData.player.hp
+      enemyDamage = hurtUnit(enemyDamage, gameData.player)
+      gameData.player.hp -= enemyDamage;
+
+      sumPlayer({
+        sumType: 'hurt',
+        hurtType: "normal",
+        value: enemyDamage,
+        isPlayerRound: false,
+        source: theEnemy
+      })
+
+      gameData.combat.log.push({
+        type: "enemy",
+        text: `${theEnemy.name}对你造成了${enemyDamage}点伤害！`
+      });
+
+      let dieCheck = handleUnitDie({
+        method:theEnemy.name || 'enemy',
+        methodName:'enemy',
+        enemy:theEnemy,
+        before:playerHpBefore,
+        value:playerHpBefore,
+      },gameData.player,false)
+      if(!dieCheck.next){
+        return
+      }
+      
+      let endResult = endEnemyRound()
+      if(!endResult.next){
+        return
+      }
+      
+
+      updateCombatUI();
+
+      // 敌方回合结算完毕 进入玩家方的下一回合
+      setTimeout(()=>{
+        // 
+        // 开始玩家回合
+        startPlayerRound()
+      },1000)
+    }
+    /**
+     * 状态处理
+     * @param {*} status 状态
+     * @param {*} unit 单位
+     * @param {*} isPlayer 是否是玩家方回合
+    */
+    function statusActions(status,unit,isPlayer=true){
+      let result = {next:true}
+      switch (status.id) {
+        case 'poison': {
+          let poisonDamage = hurtUnit(status.value,unit)
+          status.value--
+          let before = unit.hp;
+          unit.hp -= poisonDamage
+          if(isPlayer){
+            // 统计玩家收到的毒伤
+            sumPlayer({
+              sumType: 'hurt',
+              hurtType: "poison",
+              value: poisonDamage,
+              isOutFight:false,
+              isPlayerRound: true,
+              source: status
+            })
+          }else{
+            // 统计玩家造成的毒伤 // 目前仅考虑 中毒状态由敌对单位施加
+            sumPlayer({
+              sumType: 'damage',
+              damageType: "poison", // 伤害类型
+              value: poisonDamage, // 统计基准值
+              isPlayerRound: true, // 是否是玩家回合
+              target: unit, // 伤害目标
+            })
+          }
+          if(!status.value){
+            // 移除状态
+            let index = unit.status.findIndex(m => m.id === 'poison')
+            unit.status.splice(index,1)
+          }
+          let isNext = handleUnitDie({
+            method:'poison',
+            methodName:'status',
+            status,
+            before:before,
+            value:before,
+          },unit,isPlayer)
+          if(!isNext.next){
+            result.next = false
+            return result;
+          }
+          break;
+        }
+      }
+      return result
+    }
+    // 统一封装战斗中死亡的处理
+    /**
+     * @param {*} reason 死亡原因
+     * @param {*} unit 死亡单位
+     * @param {*} isPlayer 是否玩家回合
+    */
+    function handleUnitDie(reason,unit,isPlyaer){
+      let result = {next:true}
+      if (gameData.player.hp <= 0) {
+        // 统计死亡
+        sumPlayer({
+          sumType: 'dead',
+          stat_level: 'game',
+          method: reason.method || 'enemy',
+          [reason.methodName||'methodName']:JSON.parse(JSON.stringify(reason.methodInfo||null)),
+          isOutFight: !gameData.combat.active,
+          isPlayerRound: isPlyaer,
+          enemy: JSON.parse(JSON.stringify(gameData.combat.enemy)),
+          before: reason.before,
+          value: reason.value, // 致死伤害
+          isCritic:reason.isCritic,
+        })
+        if(!reason.isOutFight){
+          endCombat(false);
+          result.next = false
+        }
+        result.die = gameData.player;
+        return result;
+      }else if(gameData.combat.active && gameData.combat.enemy.hp<=0){
+          // 统计击杀
+        sumPlayer({
+          sumType: 'defeat',
+          stat_level: 'game',
+          method: reason.method || 'enemy',
+          [reason.methodName||'methodName']:JSON.parse(JSON.stringify(reason.methodInfo||null)),
+          isOutFight: !gameData.combat.active,
+          isPlayerRound: isPlyaer,
+          target: JSON.parse(JSON.stringify(gameData.combat.enemy)),
+          before: reason.before,
+          value: reason.value, // 致死伤害
+          isCritic:reason.isCritic,
+        })
+        if(unit.onDeath){
+          let hookResult = runUnitHook(unit.onDeath,unit,isPlyaer)
+          if(!hookResult.next){
+            result.next = false
+            return result;
+          }
+        }
+        if(!reason.isOutFight){
+          endCombat(true);
+          result.next = false
+        }
+        result.die = gameData.combat.enemy;
+        return result;
+      }
+      return result
+    };
+    function pickUnitAttack(unit) {
+      let base = unit.attack || 0
+      let unitEquip = unit.equipment
+      if (unitEquip && unitEquip.weapon) {
+        base += unitEquip.weapon.attack || 0
+      }
+
+      let baseBig = unit.bigAttack || 0
+      if (unitEquip && unitEquip.weapon) {
+        baseBig += unitEquip.weapon.bigAttack || 0
+      }
+      base = base * (1 + baseBig / 100)
+
+      return base;
+    }
+    function criticValue(value, unit) {
+      let result = { isCritic: false, value }
+      let rate = unit.criticalRate || 0
+      if (unit.equipment && unit.equipment.accessory && unit.equipment.accessory.criticalRate) {
+        rate += (unit.equipment.accessory.criticalRate || 0);
+        result.isCritic = Math.random() * 100 < rate;
+        if (result.isCritic) {
+          let sumUnitCriticalDamage = (unit.criticalDamage || 0) + (unit.equipment.accessory.criticalDamage || 0)
+          result.value = value * (1 + (sumUnitCriticalDamage) / 100)
+        }
+      }
+      return result
+    }
+    function unitLuanchDamage(unit) {
+
+    }
+    function pickUnitDefend(unit) {
+      let base = unit.defend || 0
+      let unitEquip = unit.equipment
+      if (unitEquip && unitEquip.armor) {
+        base += unitEquip.armor.defend || 0
+      }
+      let baseBig = unit.bigDefend || 0
+      if (unitEquip && unitEquip.armor) {
+        baseBig += unitEquip.armor.bigDefend || 0
+      }
+      base = base * (1 + baseBig / 100)
+
+      return base;
+    }
+    function hurtUnit(damage, unit, overflow = true) {
+      let defend = pickUnitDefend(unit);
+      let afterDef = Math.max(1, damage - defend)
+      if (overflow) {
+        return afterDef; // 允许
+      } else {
+        let d = Math.min(unit.hp, afterDef) // 不允许溢出
+        return d
+      }
+    }
+    // 使用技能
+    function useSkill(skill, isEnemy = false) {
+      if (gameData.combat.active && gameData.combat.enemy) {
+        let skillUnit = isEnemy ? gameData.combat.enemy : gameData.player;
+        let oppoUnit = isEnemy ? gameData.player : gameData.combat.enemy;
+        let roundOwner = isEnemy ? 'enemy' : 'player';
+        let roundOwnerName = isEnemy ? skillUnit.name : '你';
+
+        let costInfo = {}
+        // 技能消耗
+        if (skill.bigCost) {
+          let bigCost = Math.min(100, skill.bigCost)
+          switch (skill.costType) {
+            case 'gold': {
+              // 敌人没有金币 使用不了消耗金币的技能
+              if (isEnemy) { return };
+              let goldBefore = skillUnit.gold;
+              let goldCost = Math.floor(bigCost / 100 * skillUnit.gold);
+              skillUnit.gold -= goldCost;
+              costInfo.goldCost = goldCost
+              costInfo.goldBefore = goldBefore
+              // 统计金币消耗
+              sumPlayer({
+                sumType: 'gold',
+                method: 'skill',
+                stat_level: 'game',
+                changeType: 'decrease',
+                value: goldCost,
+                goldBefore,
+                goldAfter: skillUnit.gold,
+                isPlayerRound: true,
+              })
+              break;
+            }
+            case 'exp': {
+              // 敌人没有经验 使用不了消耗经验的技能
+              if (isEnemy) { return };
+              let expBefore = skillUnit.exp;
+              let expCost = Math.floor(bigCost / 100 * skillUnit.exp);
+              skillUnit.exp -= expCost;
+              costInfo.expCost = expCost
+              costInfo.expBefore = expBefore
+              // 统计金币消耗
+              sumPlayer({
+                sumType: 'exp',
+                method: 'skill',
+                stat_level: 'game',
+                changeType: 'decrease',
+                value: expCost,
+                expBefore,
+                goldAfter: skillUnit.exp,
+                isPlayerRound: true,
+              })
+              break;
+            }
+          }
+        } else if (skill.cost) {
+          //  to do
+        }
+
+        if (skill.skillType === 'damage') {
+          let skillDamage
+
+          if (skill.damage) {
+            // 伤害技能
+            skillDamage = skill.damage;
+
+          } else if (skill.bigAttackDamage) {
+            // 伤害技能
+            let weaponAttack = (skillUnit.equipment && skillUnit.equipment.weapon && skillUnit.equipment.weapon.attack) || 0
+            skillDamage = Math.ceil(skill.bigAttackDamage / 100 * (skillUnit.attack + weaponAttack));
+
+          } else if (skill.bigGoldDamage) {
+            let goldValue = skillUnit.gold
+            if(skill.costType==='gold'){
+              goldValue = costInfo.goldBefore;
+            }
+            // 伤害技能
+            skillDamage = skill.bigGoldDamage / 100 * goldValue;
+
+          } else if (skill.bigEnemyMaxHpDamage) {
+
+            skillDamage = Math.ceil(skill.bigEnemyMaxHpDamage / 100 * oppoUnit.maxHp);
+
+          } else if (skill.randomDamage) {
+            // 随机伤害
+            skillDamage = Math.floor(Math.random() * skill.randomDamage + 1);
+
+          } else {
+
+            skillDamage = Math.floor(Math.random() * 5) + skillUnit.attack;
+
+          }
+          let criticResult = criticValue(skillDamage, skillUnit)
+          let isCritic = criticResult.isCritic
+          skillDamage = criticResult.value
+
+          if(skill.damageType !== 'absolute'){
+            skillDamage = hurtUnit(skillDamage, oppoUnit)
+          }
+          let oppoHpBefore = oppoUnit.hp
+          oppoUnit.hp -= skillDamage;
+          if (roundOwner === 'player') {
+            sumPlayer({
+              sumType: 'damage',
+              damageType: skill.damageType || 'normal',
+              value: skillDamage,
+              isPlayerRound: true,
+              target: gameData.combat.enemy
+            });
+          } else {
+            sumPlayer({
+              sumType: 'hurt',
+              hurtType: skill.damageType || 'normal',
+              value: skillDamage,
+              isPlayerRound: false,
+              source: gameData.combat.enemy,
+            });
+          }
+
+          gameData.combat.log.push({
+            type: roundOwner,
+            text: `${isCritic ? '暴击了！' : ''}${roundOwnerName}使用了${skill.name}，对${oppoUnit.name}造成了${skillDamage}点伤害！`
+          });
+
+          // 检查敌人是否被击败
+          let isNext = handleUnitDie({
+            damgeType:skill.damegType||'normal',
+            method:'skill',
+            methodName:'skill',
+            skill,
+            before:oppoHpBefore,
+            value:oppoHpBefore,
+            isCritic,
+          },oppoUnit,roundOwner !== 'player')
+          if(!isNext.next){
+            return
+          }
+
+          if (roundOwner === 'player') {
+            
+            let endResult = endPlayerRound()
+            if(!endResult.next){
+              return
+            }
+            // 敌人反击
+            setTimeout(() => {
+              runEnemyRoundAction()
+            }, 1000);
+          }
+        } else if (skill.skillType === 'heal') {
+          let healAmount;
+          if (skill.heal) {
+            // 治疗技能
+            healAmount = skill.heal;
+          }
+          else if (skill.bigHeal) {
+            healAmount = Math.floor(skill.bigHeal / 100 * skillUnit.maxHp);
+          } else {
+            healAmount = Math.floor(Math.random() * 5) + 1
+          }
+
+          let criticResult = criticValue(healAmount, skillUnit)
+          let isCritic = criticResult.isCritic
+          healAmount = criticResult.value
+
+          let oldHp = skillUnit.hp
+          skillUnit.hp = Math.min(skillUnit.maxHp, skillUnit.hp + healAmount);
+          if (roundOwner === 'player') {
+            sumPlayer({
+              sumType: 'heal',
+              method: skill.name || 'skill',
+              skill,
+              healType: 'normal',
+              isPlayerRound: true,
+              source: gameData.player,
+              fullValue: healAmount,
+              value: skillUnit.hp - oldHp,
+              isCritic,
+            });
+          }
+
+          gameData.combat.log.push({
+            type: "heal",
+            text: `${roundOwnerName}使用了${skill.name}，${isCritic ? '暴击了！' : ''}恢复了${healAmount}点生命值！`
+          });
+          if (roundOwner === 'player') {
+            
+            let endResult = endPlayerRound()
+            if(!endResult.next){
+              return
+            }
+            // 敌人反击
+            setTimeout(() => {
+              runEnemyRoundAction()
+            }, 1000);
+          }
+        } 
+        else if(skill.skillType==='mpRecover'){ // 恢复魔法值的技能
+          let mpBefore = skillUnit.mp||0
+          let recoverAmount;
+          if(skill.recover){
+            recoverAmount = skill.recover;
+          }else if(skill.bigRecover){
+            recoverAmount = Math.floor(skill.bigRecover/100 * (skillUnit.mp||0));
+          }else{
+            recoverAmount = 5
+          }
+          // 至少恢复1
+          skillUnit.mp = (skillUnit.mp||0) + Math.max(recoverAmount,1);
+
+          if(!isEnemy){
+            sumPlayer({
+              sumType:'mp',
+              method:'skill',
+              skill:skill,
+              changeType:'increase',
+              isOutFight:false,
+              isPlayerRound:true,
+              before:mpBefore,
+              value:skillUnit.mp - mpBefore,
+            })
+          }
+        }
+        else if(skill.skillType==='rule'){
+          // 不好归类的其他类型
+          if(skill.successRate){ // 如果存在成功率设定
+            let rand = (Math.random()*100);
+            console.log(`使用技能${skill.name}，成功判定落点：${rand}%，技能成功率：${skill.successRate}%`);
+            if(rand >= skill.successRate){
+              // 技能使用失败
+              // to do 统计技能使用失败 
+              // 更新 log
+              gameData.combat.log.push({
+                type:roundOwner,
+                text: `${roundOwnerName}使用了${skill.name}，但使用失败了！`
+              })
+              updateCombatUI()
+              
+              if (roundOwner === 'player') {
+                
+                let endResult = endPlayerRound()
+                if(!endResult.next){
+                  return
+                }
+                // 敌人反击
+                setTimeout(() => {
+                  runEnemyRoundAction()
+                }, 1000);
+              }
+              return
+            }
+            // 技能使用成功 
+          }
+          if(skill.effect.type==='item'){
+            let theItem = rpgGameItemData.find(m=>m.name===skill.effect.item)
+            if(theItem){
+              let copy = JSON.parse(JSON.stringify(theItem))
+              let useResult = useItem(copy,false,true)
+            }
+          }
+          if (roundOwner === 'player') {
+            
+            let endResult = endPlayerRound()
+            if(!endResult.next){
+              return
+            }
+            // 敌人反击
+            setTimeout(() => {
+              runEnemyRoundAction()
+            }, 1000);
+          }
+        }else if (skill.skillType === 'status') {
+          // 状态技能 
+          if (skill.status) {
+            let value = skill.status.value
+            let theStatus = rpgGameStatusData.find(status => status.name === skill.status.name)
+            theStatus = JSON.parse(JSON.stringify(theStatus || null));
+            theStatus.value = value;
+            let statusUnit = theStatus.target === 'self' ? skillUnit : oppoUnit;
+            if (!statusUnit.status) {
+              statusUnit.status = []
+            }
+            let index = statusUnit.status.findIndex(m => {
+              let name = typeof m === 'string' ? m : m.name
+              return name === theStatus.name
+            })
+            if (index !== -1) {
+              if (typeof statusUnit.status[index] === 'string') {
+                statusUnit.status[index] = theStatus
+              } else {
+                statusUnit.status[index].value += value
+              }
+            } else {
+              statusUnit.status.push(theStatus)
+            }
+          }
+        }else if(skill.skillType==='bless'){
+          switch(skill.blessType){
+            case 'hook':{
+              if(!skillUnit[skill.hook]){
+                skillUnit[skill.hook]={};
+              }
+              let theUnitSkillHook = skillUnit[skill.hook]
+              if(skill.hpRecover){
+                theUnitSkillHook.hpRecover = (theUnitSkillHook.hpRecover||0) + skill.hpRecover;
+              }
+              gameData.combat.log.push({
+                type:roundOwner,
+                text:`${roundOwner === 'player'?'你':skillUnit.name}使用了技能${skill.name}！`
+              })
+              if(roundOwner === 'player'){
+                endPlayerRound()
+                setTimeout(()=>{
+                  runEnemyRoundAction()
+                },1000)
+              }else{
+                endEnemyRound()
+                setTimeout(()=>{
+                  startPlayerRound()
+                },1000)
+              }
+              break;
+            }
+          }
+        }
+
+        updateCombatUI();
+      }
+    }
+
+    // 结束战斗
+    function endCombat(playerWon) {
+      if (playerWon) {
+        // 玩家胜利
+        gameData.combat.log.push({
+          type: "info",
+          text: `你击败了${gameData.combat.enemy.name}！`
+        });
+        let rewardsGainList = []
+        // 获得奖励
+        const reward = gameData.combat.enemy.reward;
+        if(reward){
+          if (reward.exp && reward.gold) {
+            let expBefore = gameData.player.exp;
+            let goldBefore = gameData.player.gold;
+            gameData.player.exp += reward.exp;
+            gameData.player.gold += reward.gold;
+            sumPlayer([
+              // 统计经验获取与经验量
+              {
+                sumType: 'gold',
+                method: 'defeat',
+                changeType: 'increase',
+                value: reward.gold,
+                before: goldBefore,
+                after: gameData.player.gold,
+                isPlayerRound: true,
+              },
+              // 统计经验获取与金币获取
+              {
+                sumType: 'exp',
+                method: 'defeat',
+                changeType: 'increase',
+                value: reward.exp,
+                before: expBefore,
+                after: gameData.player.exp,
+                isPlayerRound: true,
+              }]
+            );
+
+            let commonGain = `获得${reward.exp}点经验值和${reward.gold}金币！`
+            rewardsGainList.push(commonGain)
+            gameData.combat.log.push({
+              type: "info",
+              text: commonGain,
+            });
+          }
+          if (reward.bigExp) {
+            let expReward = Math.floor(reward.bigExp / 100 * gameData.player.nextLevelExp);
+            let expBefore = gameData.player.exp
+            gameData.player.exp += expReward
+            // 统计经验获取与经验量
+            sumPlayer({
+              sumType: 'exp',
+              method: 'defeat',
+              changeType: 'increase',
+              value: expReward,
+              before: expBefore,
+              after: gameData.player.exp,
+              isPlayerRound: true,
+            });
+            let expRewardGain = `获得${reward.bigExp}%经验值！`
+            rewardsGainList.push(expRewardGain)
+            gameData.combat.log.push({
+              type: "info",
+              text: expRewardGain,
+            });
+          }
+          if (reward.bigGold) {
+            let goldReward = Math.floor(reward.bigExp / 100 * gameData.player.gold);
+            let goldBefore = gameData.player.gold
+            gameData.player.gold += goldReward
+            // 统计金币获得与金币量
+            sumPlayer({
+              sumType: 'gold',
+              method: 'defeat',
+              changeType: 'increase',
+              value: goldReward,
+              before: goldBefore,
+              after: gameData.player.gold,
+              isPlayerRound: true,
+            });
+            let goldRewardGain = `获得${reward.bigExp}%金币！`
+            rewardsGainList.push(goldRewardGain)
+            gameData.combat.log.push({
+              type: "info",
+              text: goldRewardGain,
+            });
+          }
+          // 装备与物品
+          if (reward.equip) {
+            let playerEquip = gameData.player.equipment
+            for (let i = 0; i < reward.equip.length; i++) {
+              let one = reward.equip[i];
+              let rand = Math.random() * 100;
+              if (one.rate > rand) {
+                let theEquipment = Object.assign(
+                  {},
+                  JSON.parse(JSON.stringify( 
+                    rpgGameEquipmentData.find(m=>{
+                      return m.name === one.name;
+                    }) || {}
+                  )),
+                  JSON.parse(JSON.stringify(one))
+                )
+                // 统计装备获得
+                sumPlayer({
+                  sumType: 'equipment',
+                  stat_level: 'game',
+                  method: 'defeat',
+                  equipment: one,
+                  source: gameData.combat.enemy,
+                });
+                let equipGain = `获得${theEquipment.eqpType === 'weapon'
+                  ? '武器'
+                  : theEquipment.eqpType === 'armor'
+                    ? '盔甲'
+                    : '饰品'
+                  }: ${theEquipment.name}！`;
+                rewardsGainList.push(equipGain)
+                gameData.combat.log.push({
+                  type: "info",
+                  text: equipGain
+                });
+                if (theEquipment.eqpType === 'weapon') {
+                  let cpareResult = compareEquipment(theEquipment, playerEquip.weapon)
+                  if(cpareResult.new > cpareResult.old){
+                    gameData.combat.log.push({
+                      type: "info",
+                      text: `武器自动替换为评分更高的${theEquipment.name}:${cpareResult.new}！并丢弃旧武器${playerEquip.weapon.name}:${cpareResult.old}！`
+                    });
+                    playerEquip.weapon = theEquipment;
+                  }
+                } else if (theEquipment.eqpType === 'armor') {
+                  let cpareResult = compareEquipment(theEquipment, playerEquip.armor)
+                  if (cpareResult.new > cpareResult.old) {
+                    gameData.combat.log.push({
+                      type: "info",
+                      text: `盔甲自动替换为评分更高的${theEquipment.name}:${cpareResult.new}！并丢弃旧盔甲${playerEquip.armor.name}:${cpareResult.old}！`
+                    });
+                    playerEquip.armor = theEquipment;
+                  }
+                } else {
+                  let cpareResult = compareEquipment(theEquipment, playerEquip.accessory||{})
+                  if (cpareResult.new > cpareResult.old) {
+                    gameData.combat.log.push({
+                      type: "info",
+                      text: `饰品自动替换为评分更高的${theEquipment.name}:${cpareResult.new}！${playerEquip.accessory ? `并丢弃旧饰品${playerEquip.accessory.name}:${cpareResult.old}！` : ''}`
+                    });
+                    playerEquip.accessory = theEquipment
+                  }
+                }
+              }
+            }
+          }
+          if (reward.skill) {
+            for (let one of reward.skill) {
+              if (Math.random() * 100 < one.rate) {
+                let newOne = Object.assign(
+                  {},
+                  JSON.parse(JSON.stringify(
+                    rpgGameSkillData.find(skl=>{
+                      return skl.name === one.name
+                    })||{}
+                  )),
+                  one
+                );
+                let oldOne = gameData.player.skills.find(m => m.name === one.name)
+
+                if (oldOne) {
+                  let skCpareResult = compareSkill(newOne,oldOne)
+                  if(skCpareResult.another){
+                    // 完全新的技能 执行添加
+                    sumPlayer({
+                      sumType: 'skill',
+                      stat_level: 'game',
+                      method: 'defeat',
+                      skill: newOne,
+                      source: gameData.combat.enemy
+                    });
+                    gameData.player.skills.push(JSON.parse(JSON.stringify(newOne)));
+                    let skillGain = `获得技能：${newOne.name}!`
+                    gameData.combat.log.push({
+                      type: 'skill',
+                      text: skillGain,
+                    })
+                  }else if(skCpareResult.new > skCpareResult.old){
+                    // 完全新的技能 执行添加
+                    sumPlayer({
+                      sumType: 'skill',
+                      stat_level: 'game',
+                      method: 'defeat',
+                      skill: newOne,
+                      source: gameData.combat.enemy
+                    });
+                    // 同名但属性有优劣 以新换旧
+                    let index = gameData.player.skills.findIndex(skl=>{
+                      return skl.name === oldOne.name && skl.skillType === oldOne.skillType
+                    })
+                    gameData.player.skills.splice(index,1,newOne)
+                    let skillGain = `已替换技能：${newOne.name}!`
+                    gameData.combat.log.push({
+                      type: 'skill',
+                      text: skillGain,
+                    })
+                  }else{
+                    // 完全相同
+                    gameData.combat.log.push({
+                      type: "info",
+                      text: `技能已存在，无法获得！`
+                    });
+                  }
+                } else {
+                  // 统计技能获得
+                  sumPlayer({
+                    sumType: 'skill',
+                    stat_level: 'game',
+                    method: 'defeat',
+                    skill: newOne,
+                    source: gameData.combat.enemy
+                  });
+                  gameData.player.skills.push(JSON.parse(JSON.stringify(newOne)));
+                  let skillGain = `获得技能：${newOne.name}!`
+                  rewardsGainList.push(skillGain)
+                  gameData.combat.log.push({
+                    type: "info",
+                    text: skillGain
+                  })
+                }
+              }
+            }
+          }
+
+          if (reward.item) {
+            for (let one of reward.item) {
+              if (Math.random() * 100 < one.rate) {
+                let theItem = rpgGameItemData.find(m => m.name === one.name)
+                let matchOne = gameData.player.inventory.find(m => m.name === theItem.name)
+                // 统计物品获得
+                sumPlayer({
+                  sumType: 'item',
+                  stat_level: 'game',
+                  method: 'defeat',
+                  item: theItem,
+                  source: gameData.combat.enemy
+                });
+                if (matchOne) {
+                  matchOne.quantity++
+                } else {
+                  gameData.player.inventory.push(theItem)
+                }
+                let itemGain = `获得物品：${theItem.name}！`
+                rewardsGainList.push(itemGain)
+              }
+            }
+          }
+          
+        }
+        
+        // 检查升级
+        handleLevelUp()
+
+        updateCombatUI();
+
+        // 延迟后关闭战斗
+        setTimeout(() => {
+          gameData.combat.active = false;
+          gameData.currentEvent = {
+            title: "战斗胜利",
+            description: `你击败了${gameData.combat.enemy.name}，获得了胜利！${rewardsGainList.join('')}`,
+            actions: [
+              { text: "继续探索", type: "explore" },
+              { text: "休息恢复", type: "rest" },
+              { text: "继续前进", type: "escape" },
+              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+            ].filter(Boolean)
+          };
+          updateUI();
+        }, 2000);
+        // let currentFightStat = gameData.player.currentGameStat.currentFightStat
+        // gameData.player.history.push({
+        //   historyType:'combat',
+        //   combatResult:'win',
+        //   enemy: gameData.combat.enemy,
+        //   rewards: reward,
+        //   result: gameData.combat.playerHp <= 0 ? "lose" : "win",
+        //   fightStat:currentFightStat
+        // })
+      } else {
+        // 玩家失败
+        gameData.combat.log.push({
+          type: "info",
+          text: `你被${gameData.combat.enemy.name}击败了！`
+        });
+
+        // 延迟后关闭战斗
+        setTimeout(() => {
+          gameData.combat.active = false;
+          gameData.player.hp = Math.floor(gameData.player.maxHp * 0.3); // 恢复部分HP
+          gameData.currentEvent = {
+            title: "战斗失败",
+            description: `你被${gameData.combat.enemy.name}击败了，勉强逃脱。`,
+            actions: [
+              { text: "冒险探索", type: "explore" },
+              { text: "休息恢复", type: "rest" },
+              { text: "尝试撤退", type: "escape" },
+              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
+              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
+            ].filter(Boolean)
+          };
+          updateUI();
+        }, 2000);
+      };
+      // 战斗结束 统计对象操作
+      sumPlayer({
+        sumType: 'end-combat',
+      })
+
+      updateCombatUI();
+    }
+    // 检查并处理升级
+    function handleLevelUp() {
+      if (gameData.player.exp >= gameData.player.nextLevelExp) {
+        // 升级自然增长攻防生命值
+        let attackBefore = gameData.player.attack
+        let defendBefore = gameData.player.defend
+        let maxHpBefore = gameData.player.maxHp
+        let hpBefore = gameData.player.hp
+
+        gameData.player.attack++
+        gameData.player.defend++
+        gameData.player.maxHp += 10;
+        gameData.player.hp = gameData.player.maxHp
+        let tool = [
+          ['attack', attackBefore, gameData.player.attack],
+          ['defend', defendBefore, gameData.player.defend],
+          ['maxHp', maxHpBefore, gameData.player.maxHp],
+          ['hp', hpBefore, gameData.player.hp]
+        ];
+        tool.forEach(([prop, before, after]) => {
+          sumPlayer({
+            sumType: 'prop',
+            stat_level: 'game',
+            prop: prop,
+            changeType: 'increase',
+            before,
+            value: after - before,
+            method: 'levelUp',
+          })
+        });
+
+        setTimeout(showLevelUpModal, 1500);
+      }
+    }
+    // 显示升级模态框
+    function showLevelUpModal() {
+      elements.newLevel.textContent = gameData.player.level + 1;
+      elements.levelupModal.style.display = 'flex';
+    }
+
+    // 选择升级奖励
+    function selectLevelUpReward(type) {
+      gameData.player.level++;
+      let gains = [];
+      switch (type) {
+        case 'hp': {
+          let hpReward = Math.floor(gameData.player.maxHp * 0.1);
+          let maxHpBefore = gameData.player.maxHp
+          let hpHpBefore = gameData.player.hp
+          gameData.player.maxHp += hpReward;
+          gameData.player.hp = gameData.player.maxHp;
+          // 统计最大生命值 和 生命值 
+          sumPlayer({
+            sumType: 'prop',
+            stat_level: 'game',
+            prop: 'maxHp',
+            changeType: 'increase',
+            method: 'levelUp',
+            level: gameData.player.level,
+            before: maxHpBefore,
+            value: gameData.player.maxHp - maxHpBefore
+          });
+          sumPlayer({
+            sumType: 'prop',
+            stat_level: 'game',
+            prop: 'hp',
+            changeType: 'increase',
+            method: 'levelUp',
+            level: gameData.player.level,
+            before: hpHpBefore,
+            value: gameData.player.hp - hpHpBefore
+          });
+          gains.push(`生命值上升${hpReward}点！`)
+          break;
+        }
+        case 'attack': {
+          let attackBefore = gameData.player.attack;
+          gameData.player.attack += 3;
+          // 统计攻击力
+          sumPlayer({
+            sumType: 'prop',
+            stat_level: 'game',
+            prop: 'attack',
+            changeType: 'increase',
+            method: 'levelUp',
+            level: gameData.player.level,
+            before: attackBefore,
+            value: gameData.player.attack - attackBefore,
+          })
+          gains.push(`攻击力上升3点！`)
+          break;
+        }
+        case 'skill':
+          // 从可用技能中随机选择一个新技能
+          const availableSkills = gameData.lvupRewardSkills.filter(skill =>
+            !gameData.player.skills.some(playerSkill => playerSkill.name === skill)
+          );
+
+          if (availableSkills.length > 0) {
+            const newSkillName = availableSkills[Math.floor(Math.random() * availableSkills.length)];
+            let newSkill = rpgGameSkillData.find(skill => skill.name === newSkillName);
+            // 统计技能
+            sumPlayer({
+              sumType: 'skill',
+              stat_level: 'game',
+              method: 'levelUp',
+              level: gameData.player.level,
+              skill: newSkill,
+            });
+            gameData.player.skills.push(JSON.parse(JSON.stringify(newSkill)));
+            gains.push(`获得新技能${newSkill.name}！`)
+          } else {
+            console.log("没有可用技能");
+            let replacedReward = ['hp', 'defend', 'attack'][Math.floor(Math.random() * 3)]
+            gameData.player[replacedReward] += 3
+            gains.push(`没有可用技能！已自动转为3点${replacedReward === 'hp' ? '生命值' : replacedReward === 'defend' ? '防御力' : '攻击力'}！`)
+          }
+          break;
+      }
+
+      // 重置经验值
+      gameData.player.exp = gameData.player.exp - gameData.player.nextLevelExp;
+      gameData.player.nextLevelExp = Math.ceil(gameData.player.nextLevelExp * 1.1);
+      elements.levelupModal.style.display = 'none';
+
+      gameData.currentEvent.description += `你升到了${gameData.player.level}级！${gains.join('')}`
+
+      updateUI();
+      if (gameData.player.exp >= gameData.player.nextLevelExp) {
+        return handleLevelUp()
+      }
+    }
+
+    function compareEquipment(newEqp,oldEqp){
+      const result = {new:0,old:0}
+      let player = gameData.player;
+      // 伤害方向
+      let playerAttack = player.attack||0
+      let playerBigAttack = player.bigAttack||0
+      let playerCriticalRate = player.criticalRate||0
+      let playerCriticalDamage = player.criticalDamage||0
+      // 当前武器下 玩家的基础攻击期望
+      // 大小攻击 暴击率暴击伤害期望  = 暴击率 * ( 1 + 爆伤比率 )
+      let newDamageExpect = calcDamageMathExpect({
+        attack:playerAttack + newEqp.attack||0,
+        bigAttack:playerBigAttack + newEqp.bigAttack||0,
+        criticalRate:playerCriticalRate + newEqp.criticalRate||0,
+        criticalDamage:playerCriticalDamage + newEqp.criticalDamage||0,
+      })
+      let oldDamageExpect = calcDamageMathExpect({
+        attack:playerAttack + oldEqp.attack||0,
+        bigAttack:playerBigAttack + oldEqp.bigAttack||0,
+        criticalRate:playerCriticalRate + oldEqp.criticalRate||0,
+        criticalDamage:playerCriticalDamage + oldEqp.criticalDamage||0,
+      })
+      // 比较与计分 攻击期望提升幅度百分比
+      let betterAttackOne = newDamageExpect > oldDamageExpect 
+        ? ((result.new += Math.ceil((newDamageExpect - oldDamageExpect) / oldDamageExpect * 100) / 100),newEqp) 
+        : ((result.old += Math.ceil((oldDamageExpect - newDamageExpect) / newDamageExpect * 100) / 100),oldEqp);
+      // 防御方向
+      let playerDefend = player.defend||0
+      let playerBigDefend = player.bigDefend||0
+      let playerDodgeRate = player.dodgeRate||0
+      let newDefendExpect = calcDefendMathExpect({
+        defend:playerDefend + newEqp.defend||0,
+        bigDefend:playerBigDefend + newEqp.bigDefend||0,
+        dodgeRate:playerDodgeRate + newEqp.dodgeRate||0,
+      })
+      let oldDefendExpect = calcDefendMathExpect({
+        defend:playerDefend + oldEqp.defend||0,
+        bigDefend:playerBigDefend + oldEqp.bigDefend||0,
+        dodgeRate:playerDodgeRate + oldEqp.dodgeRate||0,
+      })
+      // 防御比较与计分 承伤期望降幅百分比 
+      let betterDefendOne = newDefendExpect < oldDefendExpect 
+        ? ((result.new += Math.ceil((oldDefendExpect - newDefendExpect) / newDefendExpect * 100) / 100),newEqp)  
+        : ((result.old += Math.ceil((newDamageExpect - oldDefendExpect) / oldDamageExpect * 100) / 100),oldEqp);
+      
+      // 其他属性比较
+      switch(newEqp.damageType){
+        case 'absolute':{
+          result.new +=5; // 绝对伤害 加 5 分
+          break;
+        }
+        // 普通类型不加分
+        case undefined:{}
+        case 'normal':{break;}
+        default:{
+          result.new +=1 // 属性伤害 加 1 分
+          break;
+        }
+      }
+      if(newEqp.hpRecover){// 行动回血加成
+        result.new += 2
+      }
+      if(newEqp.attackHpRecover){// 攻击回血加成
+        result.new += 1
+      }
+      if(newEqp.attackStatus){// 攻击额外状态
+        result.new += 1
+      }
+      if(newEqp.attackEffects && newEqp.attackEffects.length){
+        result.new += newEqp.attackEffects.length
+      }
+      switch(oldEqp.damageType){
+        case 'absolute':{
+          result.old +=5; // 绝对伤害 加 5 分
+          break;
+        }
+        // 普通类型不加分
+        case undefined:{}
+        case 'normal':{break;}
+        default:{
+          result.old +=1 // 属性伤害 加 1 分
+          break;
+        }
+      }
+      if(oldEqp.hpRecover){// 行动回血加成
+        result.old += 2
+      }
+      if(oldEqp.attackHpRecover){// 攻击回血加成
+        result.old += 1
+      }
+      if(oldEqp.attackStatus){// 攻击额外状态
+        result.old += 1
+      }
+      if(oldEqp.attackEffects && oldEqp.attackEffects.length){
+        result.old += oldEqp.attackEffects.length
+      }
+
+      return result;
+    };
+    function calcDamageMathExpect(config={}){
+      let value = 0
+      if(config.attack){
+        value = config.attack
+      }
+      if(config.bigAttack){
+        value *= (1 + config.bigAttack/100)
+      }
+      if(config.criticalRate && config.criticDamage){
+        value *= (1 + config.criticalRate/100 * config.criticDamage/100)
+      }
+      return value
+    }
+    /**
+     * 计算防御单位的承伤期望
+     * @param {*} config 配置参数
+     * @param {*} relaDamage 参考伤害
+    */
+    function calcDefendMathExpect(config={},relaDamage=1e8){
+      let value = 0
+      if(config.defend){
+        value = config.defend
+      }
+      if(config.bigDefend){
+        value *= (1 + config.bigDefend/100)
+      }
+      if(config.dodgeRate){
+        value = 
+          // 闪避成功下
+          0 * config.dodgeRate/100 +
+          // 未闪避时 承伤 
+          (relaDamage - value) * (1 - config.dodgeRate/100);
+      }
+      return value;
+    }
+
+    function compareSkill(newSkill,oldSkill){
+      let result = {new:0,old:0}
+      if(newSkill.name===oldSkill.name && !newSkill.isUnico){
+        // 同名非独一无二的技能 皆来自引用 完全相同
+        return result
+      }
+      if(newSkill.skillType!==oldSkill.skillType){
+        // 一般地认为这种情况不存在
+        result.another = true; // 技能类型不同认为是全新的技能 执行添加
+        return result
+      }
+      switch(newSkill.skillType){
+        case 'damage':{
+          damageProps.forEach(pn=>{
+            let name = pn.prop
+            if((newSkill[name]||0)>(oldSkill[name]||0)){
+              // 固定伤害技能 数值更高加一分 
+              // 随机伤害技能 数值更高加0.5分
+              // 比率伤害技能 数值更高加2分
+              result.new += (
+                name==='damage'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }else{
+              // 否则给旧技能加分
+              result.old += (
+                name==='damage'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }
+          })
+          break;
+        }
+        case 'heal':{
+          healProps.forEach(pn=>{
+            let name = pn.prop
+            if((newSkill[name]||0)>(oldSkill[name]||0)){
+              // 固定恢复技能 数值更高加一分 
+              // 随机恢复技能 数值更高加0.5分
+              // 比率恢复技能 数值更高加2分
+              result.new += (
+                name==='heal'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }else{
+              // 否则给旧技能加分
+              result.old += (
+                name==='heal'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }
+          })
+          break;
+        }
+        case 'mpRecover':{
+          mpRecoverProps.forEach(pn=>{
+            let name = pn.prop
+            if((newSkill[name]||0)>(oldSkill[name]||0)){
+              // 固定恢复技能 数值更高加一分 
+              // 随机恢复技能 数值更高加0.5分
+              // 比率恢复技能 数值更高加2分
+              result.new += (
+                name==='recover'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }else{
+              // 否则给旧技能加分
+              result.old += (
+                name==='recover'
+                  ? 1
+                  : name==='random'
+                    ? 0.5
+                    : 2
+              );
+            }
+          })
+          break;
+        }
+        case 'status':{
+          if(newSkill.status.value > oldSkill.status.value){
+            result.new += 2
+          }else{
+            result.old += 2
+          }
+          break;
+        }
+        case 'rule':{
+
+          break;
+        }
+        case 'bless':{
+
+          break;
+        }
+      }
+      // bigAttackDamage,bigGoldDamage,bigEnemyMaxHpDamage > damage,randomDamage
+      // absolute > attr > normal
+      // bigHeal > heal
+      // bigRecover > recover
+      return result
+    };
+    // ======================
+    // 存档功能实现
+    // ======================
+
+    // 保存游戏到本地存储
+    function saveGame(type = 'local') {
+      try {
+        const saveData = JSON.stringify(gameData);
+
+        if (type === 'local') {
+          localStorage.setItem('rpgGameSave', saveData);
+          showNotification('游戏已保存到本地存储！');
+        } else {
+          // 导出操作
+          currentSaveOperation = 'export';
+          elements.saveModalTitle.textContent = '导出存档';
+          elements.saveTextarea.value = saveData;
+          elements.saveTextarea.readOnly = true;
+          elements.saveModal.style.display = 'flex';
+        }
+      } catch (error) {
+        console.error('保存游戏失败:', error);
+        showNotification('保存游戏失败！', true);
+      }
+    }
+    // 从本地存储加载游戏
+    function loadLocalSave() {
+      try {
+        const saveData = localStorage.getItem('rpgGameSave');
+
+        if (saveData) {
+          const parsedData = JSON.parse(saveData);
+
+          // 更新游戏数据
+          Object.assign(gameData, parsedData);
+          updateUI();
+          showNotification('游戏已从本地存储加载！');
+        } else {
+          showNotification('没有找到本地存档！', true);
+        }
+      } catch (error) {
+        console.error('加载游戏失败:', error);
+        showNotification('加载游戏失败！', true);
+      }
+    }
+
+    // 导出存档
+    function exportSave() {
+      saveGame('export');
+    }
+
+    // 导入存档
+    function importSave() {
+      currentSaveOperation = 'import';
+      elements.saveModalTitle.textContent = '导入存档';
+      elements.saveTextarea.value = '';
+      elements.saveTextarea.placeholder = '请在此处粘贴存档JSON数据...';
+      elements.saveTextarea.readOnly = false;
+      elements.saveModal.style.display = 'flex';
+    }
+
+    // 复制存档到剪贴板
+    function copySaveToClipboard() {
+      try {
+        const saveData = JSON.stringify(gameData);
+        navigator.clipboard.writeText(saveData)
+          .then(() => {
+            showNotification('存档已复制到剪贴板！');
+          })
+          .catch(err => {
+            console.error('复制失败:', err);
+            showNotification('复制存档失败！', true);
+          });
+      } catch (error) {
+        console.error('复制存档失败:', error);
+        showNotification('复制存档失败！', true);
+      }
+    }
+
+    // 从剪贴板粘贴存档
+    function pasteSaveFromClipboard() {
+      navigator.clipboard.readText()
+        .then(text => {
+          try {
+            // 验证是否是有效的JSON
+            JSON.parse(text);
+
+            currentSaveOperation = 'import';
+            elements.saveModalTitle.textContent = '导入存档';
+            elements.saveTextarea.value = text;
+            elements.saveTextarea.readOnly = false;
+            elements.saveModal.style.display = 'flex';
+          } catch (error) {
+            showNotification('剪贴板内容不是有效的存档！', true);
+          }
+        })
+        .catch(err => {
+          console.error('读取剪贴板失败:', err);
+          showNotification('读取剪贴板失败！', true);
+        });
+    }
+
+    // 处理存档操作
+    function handleSaveOperation() {
+      try {
+        if (currentSaveOperation === 'export') {
+          // 导出操作 - 只需要关闭模态框
+          elements.saveModal.style.display = 'none';
+        } else if (currentSaveOperation === 'import') {
+          // 导入操作 - 尝试解析存档数据
+          const saveData = elements.saveTextarea.value;
+          const parsedData = JSON.parse(saveData);
+
+          // 更新游戏数据
+          Object.assign(gameData, parsedData);
+          updateUI();
+
+          // 保存到本地存储
+          localStorage.setItem('rpgGameSave', saveData);
+
+          elements.saveModal.style.display = 'none';
+          showNotification('存档导入成功！');
+        }
+      } catch (error) {
+        console.error('存档操作失败:', error);
+        showNotification('存档操作失败！', true);
+      }
+    }
+
+    // 显示通知
+    function showNotification(message, isError = false) {
+      elements.notificationText.textContent = message;
+      elements.notification.style.background = isError
+        ? 'rgba(231, 76, 60, 0.9)'
+        : 'rgba(46, 204, 113, 0.9)';
+
+      elements.notification.classList.add('show');
+
+      setTimeout(() => {
+        elements.notification.classList.remove('show');
+      }, 3000);
+    }
+
+    // 初始化游戏
+    window.onload = initGame;
+
+
+
+
+    // 测试工具 
+    const gameTest = {
+      reachFinalRequire(){
+        gameData.currentLocation = '国都'
+        gameData.currentPlaceIndex = 4;
+        if(!gameData.player.currentGameStat){
+          gameData.player.currentGameStat = {}
+        }
+        if(!gameData.player.currentGameStat.history){
+          gameData.player.currentGameStat.history = []
+        }
+        gameData.player.currentGameStat.history.push({
+          isVictory:true,
+          maxDamage:100,
+          enemy:{name:'路边一条龙'}
+        },{
+          isVictory:true,
+          maxDamage:100,
+          enemy:{name:'路边大四喜'}
+        })
+        gameData.player.inventory.push({
+          name:'泣玉',
+          icon:rpgGameIconData.shuiJing,
+          quantity:1,
+          description:'一块特别的物件',
+        })
+        gameData.currentEvent = {
+          title:'你启用了测试方法，直达最终BOSS前！',
+          description:'进行酣畅淋漓的测试吧',
+          actions:[
+            {type:'startBattle',text:"最终之战"}
+          ]
+        }
+        updateUI()
+      },
+      mostPowerful(){
+        const player = gameData.player
+        player.maxHp += 20000
+        player.hp = player.maxHp
+        player.bigAttack = 200;
+        player.attack += 1000;
+        player.defend+=1000;
+        player.gold += 1e10;
+        player.criticalRate = (player.criticalRate||0) + 100
+        player.criticalDamage =  (player.criticalDamage||0) + 300;
+
+        player.inventory.forEach(m=>{
+          m.quantity+=1000;
+        })
+        player.skills.push(
+          {...rpgGameSkillWaterDragonWaveFactory(10),isUnico:true,}
+        )
+        player.skills.forEach(m=>{
+          m.damageType = 'absolute'
+        })
+        if(!player.onRoundStart){
+          player.onRoundStart = {}
+        }
+        if(!player.onRoundStart.hpRecover){
+          player.onRoundStart.hpRecover = player.hp;
+        }
+        gameData.currentEvent = {
+          title:'你启用了测试方法，获得了伟力！',
+          description:'进行酣畅淋漓的测试吧',
+          actions:[
+            {type:'explore',text:'你的世界，启动！'}
+          ]
+        }
+        updateUI()
+      }
+    }
+  </script>
+</body>
+
+</html>
