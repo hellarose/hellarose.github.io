@@ -229,6 +229,30 @@
     <div class="unit-equipment"></div>
     <div class="enemy-unit-reward"></div>
   </div>
+  <!-- 仅当游戏结束时显示 -->
+  <div class="modal stat-modal" id="stat-modal">
+    <div class="modal-content">
+      <div class="modal-title">
+        <h2 id="stat-title">游戏胜利/失败</h2>
+      </div>
+      <div class="stat-modal-brief" id="stat-modal-brief">
+        <div class="stat-survival-count" id="stat-survival-count">
+          
+        </div>
+        <div class="stat-kill-count" id="stat-kill-count">
+        </div>
+        <div class="stat-damage" id="stat-damage">
+
+        </div>
+        <div class="stat-player-attrs" id="stat-player-attrs">
+          
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn" id="close-stat-modal">关闭</button>
+      </div>
+    </div>
+  </div>
   <script>
     
     // 游戏数据
@@ -345,6 +369,9 @@
       notification: document.getElementById('notification'),
       notificationText: document.getElementById('notification-text'),
       unitInfoNotice: document.getElementById('unit-info-notice'),
+      statModal: document.getElementById('stat-modal'),
+      closeStatModal: document.getElementById('close-stat-modal'),
+      statModalBrief: document.getElementById('stat-modal-brief'),
     };
 
     // 存档操作类型
@@ -451,7 +478,7 @@
       elements.hpValue.textContent = gameData.player.hp;
       elements.attackValue.textContent = gameData.player.attack;
       elements.defendValue.textContent = gameData.player.defend;
-      elements.goldValue.textContent = gameData.player.gold;
+      elements.goldValue.textContent = gameData.player.gold>1e8?gameData.player.gold.toExponential(4):gameData.player.gold;
       elements.expValue.textContent = gameData.player.exp;
       elements.levelValue.textContent = gameData.player.level;
 
@@ -532,6 +559,7 @@
       // 模态框关闭按钮
       elements.closeItemModal.addEventListener('click', () => elements.itemModal.style.display = 'none');
       elements.closeSkillModal.addEventListener('click', () => elements.skillModal.style.display = 'none');
+      elements.closeStatModal.addEventListener('click', () => elements.statModal.style.display = 'none');
 
       // 升级奖励选择
       elements.levelupHp.addEventListener('click', () => selectLevelUpReward('hp'));
@@ -813,7 +841,24 @@
           }
           break;
         }
+        case 'end:lose':{
+          // 失败结局
+          gameData.currentEvent = {
+            title: "Game Over",
+            description: `你距离真相还很远，下辈子注意点！`,
+            actions: [
+              { text: "查看统计", type: "viewStat" },
+              { text: "下辈子", type: "regame" },
+            ].filter(Boolean)
+          }
+          updateUI();
+          return
+          break;
+        }
         case 'viewStat':{
+          // 展示统计对话框
+          // 将统计内容处理并填充到对话框
+          return openStatModal()
           break;
         }
         case "regame":{
@@ -889,6 +934,9 @@
               } else {
                 if(foundItem.type==='skill'){
                   let theSkill = JSON.parse(JSON.stringify(rpgGameSkillData.find(m => m.name === foundItem.name) || null));
+                  if(!theSkill){
+                    theSkill = JSON.parse(JSON.stringify(foundItem))
+                  }
                   // 添加到库存
                   const oldIndex = gameData.player.skills.findIndex(skill => skill.name === theSkill.name);
                   let oper = 'add'
@@ -1276,6 +1324,69 @@
       updateCombatUI();
     }
 
+    // ----------- 统计对话框 -----------
+    function openStatModal(){
+      document.getElementById("stat-title").innerHTML = gameData.player.hp>0?'游戏胜利！':'游戏失败！'
+      elements.statModalBrief.innerHTML = '';
+      const statData = handleGameStat()
+      // <!-- 
+      //   这一局游戏中 
+      //   1. 玩家获胜与否
+      //   2. 玩家死里逃生多少次
+      //   3. 玩家此时各项属性
+      //   4. 玩家物品技能装备
+      //   5. 玩家击杀最多的单位是 
+      //   6. 玩家总计伤害与承伤
+      //   7. 玩家最高单次伤害及其类型
+      //   8. 玩家各种伤害类型陈列
+      // -->
+      /**
+       * brief
+       * 1. 击杀数 
+       * 2. 击杀最多的单位
+       * 3. 最大单次伤害/总伤害
+       * 4. 最大单次受伤/总承伤
+       * 5. 获得技能数量
+       * 6. 获得物品数量
+       */
+      let htmlStr = ''
+      let startPart = '<div class="stat-modal-brief-parag">在这局游戏中，你：</div><ul class="stat-modal-brief-p-list">'
+      let part1 = `<li class="stat-modal-brief-p-list-item">总计击杀敌人${statData.totalDefeat}名</li>`
+      let part2 = `<li class="stat-modal-brief-p-list-item">其中击杀最多的单位是${statData.enemyMostDefeat.name}，共击杀${statData.enemyMostDefeat.count}名；</li>`;
+      let part3 = `<li class="stat-modal-brief-p-list-item">单次造成的最大伤害为${statData.maxDamage}点，总计造成${statData.totalDamage}点伤害；</li>`
+      let part4 = `<li class="stat-modal-brief-p-list-item">单次承受的最大伤害为${statData.maxHurt}点，总计承受${statData.totalHurt}点伤害；</li>`
+      let part5 = `<li class="stat-modal-brief-p-list-item">累积获得过${statData.skillGainCount}次技能；</li>`
+      let part6 = `<li class="stat-modal-brief-p-list-item">累积获得过${statData.itemGainCount}次物品。</li>`
+      let endPart = '</ul>'
+      htmlStr = startPart + part1 + part2 + part3 + part4 + part5 + part6 + endPart
+      elements.statModalBrief.innerHTML = htmlStr
+      elements.statModal.style.display = 'flex';
+    }
+    function handleGameStat(){
+      let theGameStat = gameData.player.currentGameStat||{};
+      // let historyStat = gameData.player.history||[]
+      let totalDefeat = theGameStat.gameDefeatCount
+      let enemyMostDefeat = theGameStat.defeatList.reduce((acc,cur)=>{
+        return acc.count>cur.count?acc:cur
+      },{})
+      let totalDamage = theGameStat.damageSum||0
+      let maxDamage = theGameStat.maxDamage||0
+      let totalHurt = theGameStat.hurtSum||0
+      let maxHurt = theGameStat.maxHurt||0
+      let skillGainCount = theGameStat.gameSkillGainCount||0
+      let itemGainCount = theGameStat.gameItemGainCount||0
+      return {
+        totalDefeat,
+        enemyMostDefeat,
+        totalDamage,
+        maxDamage,
+        totalHurt,
+        maxHurt,
+        skillGainCount,
+        itemGainCount,
+        theGameStat
+      }
+    }
     // 打开道具选择模态框
     function openItemModal() {
       elements.itemModalGrid.innerHTML = '';
@@ -1950,7 +2061,7 @@
         case 'damage': {
           unit.damageSum = (unit.damageSum || 0) + options.value;
           // damge 统计 max sum; typeMax typeSum
-          if (options.value > unit.maxDamage) {
+          if (options.value > (unit.maxDamage||0)) {
             unit.maxDamage = options.value
             unit.maxDamageType = options.damageType;
             unit.maxDamageTarget = JSON.parse(JSON.stringify(options.target || { name: 'enemy' }))
@@ -1982,11 +2093,23 @@
               unit.typeDamageStat[typeOneIndex].isMaxCritc = options.isCritic || false;
             }
             unit.typeDamageStat[typeOneIndex].sum += options.value
+            unit.typeDamageStat[typeOneIndex].count++;
           } else {
             unit.typeDamageStat.push({
               type: options.damageType,
               max: options.value,
-              sum: options.value
+              sum: options.value,
+              count: 1,
+            })
+          }
+          if(unit.typeDamageStat.length>1){
+            // 累积 > 最值 > 次数
+            unit.typeDamageStat.sort((a,b)=>{
+              return b.count - a.count
+            }).sort((a,b)=>{
+              return b.max - a.max
+            }).sort((a,b)=>{
+              return b.sum - a.sum
             })
           }
           break
@@ -1995,7 +2118,7 @@
         case 'hurt': {
           unit.hurtSum = (unit.hurtSum || 0) + options.value;
 
-          if (options.value > unit.maxHurt) {
+          if (options.value > (unit.maxHurt||0)) {
             unit.maxHurt = options.value
             unit.maxHurtType = options.hurtType;
             unit.maxHurtSource = JSON.parse(JSON.stringify(options.source || { name: 'enemy' }))
@@ -2024,11 +2147,23 @@
           if (typeOneIndex > -1) {
             unit.typeHurtStat[typeOneIndex].max = Math.max(unit.typeHurtStat[typeOneIndex].max, options.value)
             unit.typeHurtStat[typeOneIndex].sum += options.value
+            unit.typeHurtStat[typeOneIndex].count++;
           } else {
             unit.typeHurtStat.push({
               type: options.hurtType,
               max: options.value,
-              sum: options.value
+              sum: options.value,
+              count: 1
+            })
+          }
+          if(unit.typeHurtStat.length>1){
+            // 累积 > 最值 > 次数
+            unit.typeHurtStat.sort((a,b)=>{
+              return b.count - a.count
+            }).sort((a,b)=>{
+              return b.max - a.max
+            }).sort((a,b)=>{
+              return b.sum - a.sum
             })
           }
           break
@@ -2037,7 +2172,7 @@
         case 'heal': {
           unit.healSum = (unit.healSum || 0) + options.value;
 
-          if (options.value > unit.maxHeal) {
+          if (options.value > (unit.maxHeal||0)) {
             unit.maxHeal = options.value
             unit.maxHealType = options.healType;
             unit.maxHealTarget = JSON.parse(JSON.stringify(options.target || { name: 'enemy' }))
@@ -2063,6 +2198,16 @@
               count: 1,
               sum: options.value,
               max: options.value
+            })
+          }
+          if(unit.propStatList.length>1){
+            // 累积 > 最值 > 次数
+            unit.propStatList.sort((a,b)=>{
+              return b.count - a.count
+            }).sort((a,b)=>{
+              return b.max - a.max
+            }).sort((a,b)=>{
+              return b.sum - a.sum
             })
           }
           break;
@@ -2123,6 +2268,7 @@
           if (!unit.itemStatList) {
             unit.itemStatList = []
           }
+          unit.gameItemGainCount = (unit.gameItemGainCount || 0) + 1;
           let index = unit.itemStatList.findIndex(m => m.name === options.name);
           let quickStore = JSON.parse(JSON.stringify(options.item || null))
           if (index !== -1) {
@@ -2136,6 +2282,11 @@
               count: 1,
             })
           }
+          if(unit.itemStatList.length>1){
+            unit.itemStatList.sort((a,b)=>{
+              return b.count-a.count
+            })
+          }
           break;
         }
         case 'skill': {
@@ -2144,6 +2295,7 @@
           if (!unit.skillStatList) {
             unit.skillStatList = []
           }
+          unit.gameSkillGainCount = (unit.gameSkillGainCount || 0) + 1;
           let index = unit.skillStatList.findIndex(m => m.name === options.name);
           let quickStore = JSON.parse(JSON.stringify(options.skill || null))
           if (index !== -1) {
@@ -2155,6 +2307,11 @@
               name: options.name,
               detailList: [quickStore],
               count: 1,
+            })
+          }
+          if(unit.skillStatList.length>1){
+            unit.skillStatList.sort((a,b)=>{
+              return b.count-a.count
             })
           }
           break;
@@ -2178,6 +2335,41 @@
               count: 1,
             })
           }
+          if(unit.equipmentStatList.length>1){
+            unit.equipmentStatList.sort((a, b) => b.count - a.count)
+          }
+          break;
+        }
+        case 'dead':{
+          if (stat_level !== 'game') { break }
+          // 统计死亡
+          if (!unit.deathList) {
+            unit.deathList = []
+          }
+          unit.gameDeathCount = (unit.gameDeathCount || 0) + 1;
+          let index = unit.deathList.findIndex(dth => {
+            return dth.sourceName === options.source.name
+          })
+          if (index !== -1) {
+            unit.deathList[index].count++
+            let mcIndex = unit.deathList[index].methodCounts.findIndex(m => m.method === options.method)
+            if (mcIndex !== -1) {
+              unit.deathList[index].methodCounts[mcIndex].count++
+            } else {
+              unit.deathList[index].methodCounts.push({ method: options.method, count: 1 })
+            }
+          } else {
+            unit.deathList.push({
+              sourceName: options.source.name,
+              count: 1,
+              methodCounts: [{ method: options.method, count: 1 }]
+            })
+          }
+          if(unit.deathList.length>=2){
+            unit.deathList.sort((a,b)=>{
+              return b.count - a.count
+            })
+          }
           break;
         }
         // 统计击杀
@@ -2187,18 +2379,13 @@
           if (!unit.defeatList) {
             unit.defeatList = []
           }
+          // 整局游戏总击杀数
+          unit.gameDefeatCount = (unit.gameDefeatCount || 0) + 1
           let index = unit.defeatList.findIndex(dft => {
             return dft.name === options.target.name
           })
-          let detailCell = {
-            target: options.target,
-            method: options.method,
-            item: options.item || null,
-            skill: options.skill || null,
-          }
           if (index !== -1) {
             unit.defeatList[index].count++
-            unit.defeatList[index].detail.push(detailCell)
             let mcIndex = unit.defeatList[index].methodCounts.findIndex(m => m.method === options.method)
             if (mcIndex !== -1) {
               unit.defeatList[index].methodCounts[mcIndex].count++
@@ -2209,8 +2396,12 @@
             unit.defeatList.push({
               name: options.target.name,
               count: 1,
-              detail: [detailCell],
               methodCounts: [{ method: options.method, count: 1 }]
+            })
+          }
+          if(unit.defeatList.length>=2){
+            unit.defeatList.sort((a,b)=>{
+              return b.count - a.count
             })
           }
           break
@@ -2253,7 +2444,37 @@
           unit.history.push(currentRoundStat)
           break;
         }
-        case 'end-action': {
+        // case 'end-action': {
+        //   break;
+        // }
+        case 'status':{
+          if(!unit.statusStatList){
+            unit.statusStatList = [];
+          }
+          const optionsStatus = JSON.parse(JSON.stringify(options.status))
+          let index = unit.statusStatList.findIndex(item => item.name === optionsStatus.name)
+          let cur = optionsStatus.before+optionsStatus.delta;
+          if( index !== -1 ){
+            let one = unit.statusStatList[index]
+            one.sum += optionsStatus.delta;
+            if(one.max < cur){
+              one.max = cur;
+            }
+          }else{
+            unit.statusStatList.push({
+              name: optionsStatus.name,
+              sum: optionsStatus.delta,
+              max: cur,
+            })
+          }
+          // 优先排序总计 次级排序最值
+          if(unit.statusStatList.length>=2){
+            unit.statusStatList.sort((a,b)=>{
+              return b.max - a.max;
+            }).sort((a,b)=>{
+              return b.sum - a.sum;
+            })
+          }
           break;
         }
       }
@@ -2524,6 +2745,11 @@
           status.value--
           let before = unit.hp;
           unit.hp -= poisonDamage
+          // 战斗日志
+          gameData.combat.log.push({
+            type:isPlayer?'player':'enemy',
+            text:`${isPlayer?'你':unit.name}${status.name}状态激发了,受到${poisonDamage}点毒属性伤害`
+          })
           if(isPlayer){
             // 统计玩家收到的毒伤
             sumPlayer({
@@ -2587,6 +2813,29 @@
           value: reason.value, // 致死伤害
           isCritic:reason.isCritic,
         })
+        if(gameData.combat.active && gameData.combat.enemy.isBoss){
+          // 被boss击败 游戏结束
+          gameData.combat.log.push({
+            type: "info",
+            text: `你被${gameData.combat.enemy.name}击败了！`
+          });
+
+          updateCombatUI();
+          // 延迟后关闭战斗
+          setTimeout(() => {
+            gameData.combat.active = false;
+            gameData.currentEvent = {
+              title: "你死了！",
+              description: `你被BOSS单位${gameData.combat.enemy.name}击败了，故事终结！`,
+              actions: [
+                { text: "查看后续", type: "end:lose" },
+              ].filter(Boolean)
+            }
+            updateUI();
+          }, 2000);
+          result.next = false
+          return result
+        }
         if(!reason.isOutFight){
           endCombat(false);
           result.next = false
@@ -2957,6 +3206,9 @@
             let theStatus = rpgGameStatusData.find(status => status.name === skill.status.name)
             theStatus = JSON.parse(JSON.stringify(theStatus || null));
             theStatus.value = value;
+            theStatus.origin = roundOwnerName
+            theStatus.isOriginPlayer = !isEnemy;
+            theStatus.isTargetEnemy = theStatus.target !== 'self';
             let statusUnit = theStatus.target === 'self' ? skillUnit : oppoUnit;
             if (!statusUnit.status) {
               statusUnit.status = []
@@ -2965,14 +3217,48 @@
               let name = typeof m === 'string' ? m : m.name
               return name === theStatus.name
             })
+            let combatLog = `${roundOwnerName}使用了${skill.name}，${statusUnit.name}`
+            let delta = theStatus.value
+            let before = (statusUnit.status[index]||{}).value||0
             if (index !== -1) {
               if (typeof statusUnit.status[index] === 'string') {
                 statusUnit.status[index] = theStatus
+                combatLog+=`获得状态${theStatus.name}:${theStatus.value}！`
               } else {
                 statusUnit.status[index].value += value
+                combatLog+=`状态${theStatus.name}提升了:${theStatus.value-value}！`
               }
             } else {
               statusUnit.status.push(theStatus)
+              combatLog+=`获得状态${theStatus.name}:${theStatus.value}！`
+            }
+            if(!isEnemy){
+              // 统计玩家施加状态
+              sumPlayer({
+                sumType: 'status',
+                status:theStatus,
+                delta,
+                before,
+                target:statusUnit,
+              })
+            }
+
+            gameData.combat.log.push({
+              type:roundOwner,
+              text: combatLog,
+            })
+            updateCombatUI()
+
+            if (roundOwner === 'player') {
+              
+              let endResult = endPlayerRound()
+              if(!endResult.next){
+                return
+              }
+              // 敌人反击
+              setTimeout(() => {
+                runEnemyRoundAction()
+              }, 1000);
             }
           }
         }else if(skill.skillType==='bless'){
@@ -3114,6 +3400,7 @@
                   )),
                   JSON.parse(JSON.stringify(one))
                 )
+                debugger
                 // 统计装备获得
                 sumPlayer({
                   sumType: 'equipment',
@@ -3135,6 +3422,7 @@
                 });
                 if (theEquipment.eqpType === 'weapon') {
                   let cpareResult = compareEquipment(theEquipment, playerEquip.weapon)
+                  debugger
                   if(cpareResult.new > cpareResult.old){
                     gameData.combat.log.push({
                       type: "info",
@@ -3488,7 +3776,9 @@
       // 比较与计分 攻击期望提升幅度百分比
       let betterAttackOne = newDamageExpect > oldDamageExpect 
         ? ((result.new += Math.ceil((newDamageExpect - oldDamageExpect) / oldDamageExpect * 100) / 100),newEqp) 
-        : ((result.old += Math.ceil((oldDamageExpect - newDamageExpect) / newDamageExpect * 100) / 100),oldEqp);
+        : oldDamageExpect > newDamageExpect
+          ? ((result.old += Math.ceil((oldDamageExpect - newDamageExpect) / newDamageExpect * 100) / 100),oldEqp)
+          : null;
       // 防御方向
       let playerDefend = player.defend||0
       let playerBigDefend = player.bigDefend||0
@@ -3506,8 +3796,10 @@
       // 防御比较与计分 承伤期望降幅百分比 
       let betterDefendOne = newDefendExpect < oldDefendExpect 
         ? ((result.new += Math.ceil((oldDefendExpect - newDefendExpect) / newDefendExpect * 100) / 100),newEqp)  
-        : ((result.old += Math.ceil((newDamageExpect - oldDefendExpect) / oldDamageExpect * 100) / 100),oldEqp);
-      
+        : oldDefendExpect < newDefendExpect
+          ? ((result.old += Math.ceil((newDamageExpect - oldDefendExpect) / oldDefendExpect * 100) / 100),oldEqp)
+          : null;
+      debugger
       // 其他属性比较
       switch(newEqp.damageType){
         case 'absolute':{
