@@ -355,8 +355,8 @@ function rpgGameWhatLevelUpReward(level=1){
   if(theSingle){
     reward.skill = reward.skill;
     reward.options = theSingle.options;
-    reward.propOptions = thsSingle.propOptions;
-    reward.specialOptions = thsSingle.specialOptions;
+    reward.propOptions = theSingle.propOptions;
+    reward.specialOptions = theSingle.specialOptions;
   }
 
   // perFrom 类似 single 从 from 等级起 每 length 触发一次 奖励形式与 single 逻辑结构一致
