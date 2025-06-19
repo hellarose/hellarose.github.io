@@ -220,6 +220,18 @@
       </div>
     </div>
   </div>
+  
+  <div class="modal" id="save-remove-modal">
+    <div class="modal-content">
+      <h2 class="modal-title" id="save-remove-modal-title">确认要存档清除？</h2>
+      <div class="save-remove-modal-content">
+        <div class="modal-actions">
+          <button class="action-btn" id="save-remove-modal-confirm">确认</button>
+          <button class="action-btn" id="save-remove-modal-cancel">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 通知 -->
   <div class="notification" id="notification">
@@ -429,6 +441,10 @@
       saveTextarea: document.getElementById('save-textarea'),
       saveModalConfirm: document.getElementById('save-modal-confirm'),
       saveModalCancel: document.getElementById('save-modal-cancel'),
+      saveRemoveModal: document.getElementById('save-remove-modal'),
+      saveRemoveModalTitle: document.getElementById('save-remove-modal-title'),
+      saveRemoveModalConfirm: document.getElementById('save-remove-modal-confirm'),
+      saveRemoveModalCancel: document.getElementById('save-remove-modal-cancel'),
       notification: document.getElementById('notification'),
       notificationText: document.getElementById('notification-text'),
       unitInfoNotice: document.getElementById('unit-info-notice'),
@@ -638,10 +654,14 @@
       document.getElementById('import-btn').addEventListener('click', () => importSave());
       document.getElementById('copy-save-btn').addEventListener('click', () => copySaveToClipboard());
       document.getElementById('paste-save-btn').addEventListener('click', () => pasteSaveFromClipboard());
-      document.getElementById('clear-save-btn').addEventListener('click', () => clearLocalSave());
+      document.getElementById('clear-save-btn').addEventListener('click', () => openSaveRemoveModal());
       // 存档模态框按钮
       elements.saveModalConfirm.addEventListener('click', handleSaveOperation);
       elements.saveModalCancel.addEventListener('click', () => elements.saveModal.style.display = 'none');
+
+      // 存档清除操作
+      elements.saveRemoveModalConfirm.addEventListener('click', removeLocalStore)
+      elements.saveRemoveModalCancel.addEventListener('click', () => elements.saveRemoveModal.style.display = 'none');
     }
 
     // 查看所需是否满足
@@ -4310,8 +4330,16 @@
         showNotification('存档操作失败！', true);
       }
     }
-    function clearLocalSave(){
-      confirm('确定要清除本地存档吗？') && localStorage.removeItem('rpgGameSave')
+    function openSaveRemoveModal(){
+      elements.saveRemoveModal.style.display = 'flex'
+    }
+    function removeLocalStore(){
+      debugger
+      localStorage.removeItem('rpgGameSave')
+      elements.saveRemoveModal.style.display = 'none'
+      setTimeout(()=>{
+        location.reload()
+      },1000)
     }
 
     // 显示通知
@@ -4327,7 +4355,6 @@
         elements.notification.classList.remove('show');
       }, 3000);
     }
-
     // 初始化游戏
     window.onload = initGame;
 
