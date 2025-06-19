@@ -274,6 +274,7 @@
     // 游戏数据
     const gameData = {
       gameTime:0,
+      createTimeTemp:Date.now(),
       currentLocation: "陷落的村庄",
       currentPlaceIndex: 0,
       player: JSON.parse(JSON.stringify(rpgGameBasePlayerData)),
@@ -459,9 +460,10 @@
     // 初始化游戏
     function initGame() {
       // 尝试加载本地存档
-      loadLocalSave();
+      if(!loadLocalSave().hasInitedData){
+        initData()
+      };
 
-      initData()
 
       renderMap();
       updateUI();
@@ -474,16 +476,24 @@
       let player = gameData.player
       // 物品
       for (let i = 0; i < player.inventory.length; i++) {
+        let theOne = player.inventory[i]
         player.inventory[i] = {
-          ...(rpgGameItemData.find(m => m.name === player.inventory[i].name) || {}),
-          quantity: player.inventory[i].quantity || 1,
+          ...(rpgGameItemData.find(m => m.name === theOne.name) || {}),
+          quantity: theOne.quantity || 1,
         }
       }
+      // 清理异常数据
+      player.inventory = player.inventory.filter(m=>m);
       for(let i=0;i<player.skills.length;i++){
-        player.skills[i] = player.skills[i].isUnico?player.skills[i]:{
-          ...(rpgGameSkillData.find(m => m.name === player.skills[i].name) || {}),
-        }
+        let theOne = player.skills[i]
+        player.skills[i] = theOne.isUnico
+          ? theOne
+          : {
+            ...(rpgGameSkillData.find(m => m.name === theOne.name) || {}),
+          }
       }
+      // 清理异常数据
+      player.skills = player.skills.filter(m=>m && m.skillType);
       Object.keys(player.equipment).forEach(k=>{
         if(player.equipment[k]){
           player.equipment[k] = player.equipment[k].isUnico?player.equipment[k]:JSON.parse(JSON.stringify(rpgGameEquipmentData.find(m=>m.name===player.equipment[k].name)||null))
@@ -539,7 +549,7 @@
     function updateUI() {
       // 更新事件面板
       elements.eventTitle.textContent = gameData.currentEvent.title;
-      elements.eventDescription.textContent = gameData.currentEvent.description;
+      elements.eventDescription.textContent = `${gameData.gameTime}：${gameData.currentEvent.description}`;
 
       // 清除现有按钮
       elements.actionsContainer.innerHTML = '';
@@ -608,16 +618,20 @@
         let skill = playerSkill.isUnico
           ? playerSkill
           : rpgGameSkillData.find(m => m.name === playerSkill.name);
-        const skillEl = document.createElement('div');
-        let skillAttr = displaySkillAttrs(skill)
-        skillEl.title = skillAttr.description
-        skillEl.className = 'item-card';
-        skillEl.innerHTML = `
-                    <div class="item-icon">${skill.icon}</div>
-                    <div class="item-name">${skill.name}</div>
-                    <div class="item-quantity skill">${skillAttr.value}</div>
-                `;
-        elements.skillsContainer.appendChild(skillEl);
+        if(skill){
+          const skillEl = document.createElement('div');
+          let skillAttr = displaySkillAttrs(skill)
+          skillEl.title = skillAttr.description
+          skillEl.className = 'item-card';
+          skillEl.innerHTML = `
+                      <div class="item-icon">${skill.icon}</div>
+                      <div class="item-name">${skill.name}</div>
+                      <div class="item-quantity skill">${skillAttr.value}</div>
+                  `;
+          elements.skillsContainer.appendChild(skillEl);
+        }else{
+          console.log(`技能${(playerSkill||skill||{}).name||'unknown'}不存在`)
+        }
       });
 
       // 更新战斗面板（如果激活）
@@ -637,9 +651,9 @@
       document.getElementById('combat-item').addEventListener('click', openItemModal);
 
       // 模态框关闭按钮
-      elements.closeItemModal.addEventListener('click', () => elements.itemModal.style.display = 'none');
-      elements.closeSkillModal.addEventListener('click', () => elements.skillModal.style.display = 'none');
-      elements.closeStatModal.addEventListener('click', () => elements.statModal.style.display = 'none');
+      elements.closeItemModal.addEventListener('click', () => (gameData.gameTime++,elements.itemModal.style.display = 'none'));
+      elements.closeSkillModal.addEventListener('click', () => (gameData.gameTime++,elements.skillModal.style.display = 'none'));
+      elements.closeStatModal.addEventListener('click', () => (gameData.gameTime++,elements.statModal.style.display = 'none'));
 
       // 升级奖励选择
       elements.levelupHp.addEventListener('click', () => selectLevelUpReward('hp'));
@@ -890,7 +904,7 @@
           if(checkRequire(dheRequire)){
             gameData.currentEvent = {
               title: '结局：更好的未来',
-              description: '你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染，一直没有作用的技能木弹发挥了作用，将剩余所有污染吸收带劲，最后消失在了世间。勇者成功拯救了世界，污染被彻底清除！',
+              description: `你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染，一直没有作用的技能木弹发挥了作用，将剩余所有污染吸收带劲，最后消失在了世间。勇者成功拯救了世界，污染被彻底清除！`,
               actions: [
                 { text: '查看统计', type: 'viewStat' },
                 { text: '下一局游戏', type: 'regame' }
@@ -901,7 +915,7 @@
           }else if(checkRequire(heRequire)){
             gameData.currentEvent = {
               title: '结局：一切将迎来好的结局',
-              description: '你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染。勇者成功拯救了世界！',
+              description: `你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染。勇者成功拯救了世界！`,
               actions: [
                 { text: '查看统计', type: 'viewStat' },
                 { text: '下一局游戏', type: 'regame' }
@@ -913,7 +927,7 @@
             // 坏结局
             gameData.currentEvent = {
               title: '结局：污染的世界',
-              description: '你扑上前去，但无法阻止污染的神明残屑向外面扩散，泣玉发出光芒但无济于事，仿佛有什么存在发出一声叹息。一切都被污染了！',
+              description: `你扑上前去，但无法阻止污染的神明残屑向外面扩散，泣玉发出光芒但无济于事，仿佛有什么存在发出一声叹息。一切都被污染了！`,
               actions: [
                 { text: '查看统计', type: 'viewStat' },
                 { text: '下一局游戏', type: 'regame' }
@@ -959,6 +973,8 @@
           gameData.currentPlaceIndex = 0
           gameData.combat = JSON.parse(JSON.stringify(rpgGameBaseCombatData))
           gameData.currentEvent = JSON.parse(JSON.stringify(rpgGameVeryStartEvent))
+          gameData.gameTime = 0;
+          gameData.createTimeTemp = Date.now()
           initData();
           updateUI();
           return;
@@ -967,7 +983,7 @@
           if (checkFinal()) {
             gameData.currentEvent = {
               title: '最终之战',
-              description: '路边王注意到了你，于是来到你面前，它不打算放任你了。你经历了很多，这一刻终于来临。',
+              description: `路边王注意到了你，于是来到你面前，它不打算放任你了。你经历了很多，这一刻终于来临。`,
               actions: [
                 { text: '开始战斗', type: 'startBattle' }
               ]
@@ -1171,7 +1187,7 @@
     function startPlayerRound(){
       gameData.combat.log.push({
         type:'player',
-        text:'你的回合开始！',
+        text:`你的回合开始！`,
       })
       let thePlayer = gameData.player
       if(thePlayer.onRoundStart){ // 这个配置优先于状态执行
@@ -1185,6 +1201,7 @@
           return m.autoOn === 'roundStart'
         })
         if(stageStatusList.length){
+          gameData.gameTime++
           let isStatusNext 
           for(let i=0;i<thePlayer.status.length;i++){
             let status = thePlayer.status[i]
@@ -1200,7 +1217,7 @@
     function endPlayerRound(){
       let endRoundLog = {
         type:'player',
-        text:'你的回合结束！',
+        text:`你的回合结束！`,
       }
       let result = {next:true}
       let thePlayer = gameData.player
@@ -1218,6 +1235,7 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<thePlayer.status.length;i++){
+            gameData.gameTime++
             let status = thePlayer.status[i]
             let nextCheck = statusActions(status,thePlayer,true)
             if(!nextCheck.next){
@@ -1256,6 +1274,7 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<theEnemy.status.length;i++){
+            gameData.gameTime++
             let status = theEnemy.status[i]
             let nextCheck = statusActions(status,theEnemy,false)
             if(!nextCheck.next){
@@ -1293,6 +1312,7 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<theEnemy.status.length;i++){
+            gameData.gameTime++
             let status = theEnemy.status[i]
             let nextCheck = statusActions(status,theEnemy,false)
             if(!nextCheck.next){
@@ -1327,6 +1347,7 @@
 
     // 开始战斗
     function startCombat() {
+      gameData.gameTime++
       // 获取当前地点的敌人类型
       const currentLocation = gameData.locations.find(l => l.name === gameData.currentLocation);
       const locationEnemies = currentLocation.enemies;
@@ -1400,7 +1421,7 @@
       gameData.combat.log.forEach(entry => {
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${entry.type}`;
-        logEntry.textContent = entry.text;
+        logEntry.textContent = `${gameData.gameTime}：${entry.text}`;
         elements.combatLog.appendChild(logEntry);
       });
       elements.combatLog.scrollTop = elements.combatLog.scrollHeight;
@@ -1408,6 +1429,7 @@
 
     // 处理玩家攻击
     function handlePlayerAttack() {
+      gameData.gameTime++
       if (!gameData.combat.active || !gameData.combat.enemy) return;
 
       // 计算伤害（考虑攻击力和防御力）
@@ -1531,6 +1553,7 @@
     }
     // 打开道具选择模态框
     function openItemModal() {
+      gameData.gameTime++
       elements.itemModalGrid.innerHTML = '';
 
       gameData.player.inventory.forEach(item => {
@@ -1545,7 +1568,6 @@
                     `;
           // 物品对话框道具点击
           itemEl.addEventListener('click', () => {
-            gameData.gameTime++
             useItem(item, !gameData.combat.active);
             elements.itemModal.style.display = 'none';
           });
@@ -1558,6 +1580,7 @@
 
     // 使用道具
     function useItem(item, isOutFight = false,isBySkill=false) {
+      gameData.gameTime++
       if (item.effectType === 'heal') {
 
         let hpBefore = gameData.player.hp;
@@ -1945,17 +1968,17 @@
             value: item.effect.attack,
             before: oldValue,
           })
-
+          let anounce = `你使用了${item.name}，攻击力提升了${item.effect.attack}点！`
           if (!isOutFight && gameData.combat.active) {
             gameData.combat.log.push({
               type: "info",
-              text: `你使用了${item.name}，攻击力提升了${item.effect.attack}点！`
+              text: anounce,
             });
             updateCombatUI();
           } else {
             gameData.currentEvent = {
               title: "使用道具",
-              description: `你使用了${item.name}，攻击力提升了${item.effect.attack}点！`,
+              description: anounce,
               actions: [
                 { text: "冒险探索", type: "explore" },
                 { text: "休息", type: "rest" },
@@ -2015,7 +2038,7 @@
           if (!isOutFight) {
             gameData.combat.log.push({
               type: "player",
-              text: announce
+              text: announce,
             });
             updateCombatUI();
           } else {
@@ -2132,6 +2155,7 @@
     }
     // 打开技能选择模态框
     function openSkillModal() {
+      gameData.gameTime++
       elements.skillModalGrid.innerHTML = '';
 
       gameData.player.skills.forEach(playerSkill => {
@@ -2147,7 +2171,6 @@
                 `;
         // 对话框 技能点击
         skillEl.addEventListener('click', () => {
-          gameData.gameTime++
           useSkill(skill);
           elements.skillModal.style.display = 'none';
         });
@@ -2652,6 +2675,7 @@
         */
         let hpRecoverCount  = hookConfig.hpRecoverCount || 1
         for(let i=0;i<hpRecoverCount;i++){
+          gameData.gameTime++
           let before = unit.hp
           let value = hookConfig.hpRecover
           if(hookConfig.hpRecoverType === 'bigHp'){
@@ -3077,6 +3101,7 @@
     }
     // 使用技能
     function useSkill(skill, isEnemy = false) {
+      gameData.gameTime++
       if (gameData.combat.active && gameData.combat.enemy) {
         let skillUnit = isEnemy ? gameData.combat.enemy : gameData.player;
         let oppoUnit = isEnemy ? gameData.player : gameData.combat.enemy;
@@ -4229,14 +4254,19 @@
     }
     // 从本地存储加载游戏
     function loadLocalSave() {
+      let result = {next:true}
       try {
         const saveData = localStorage.getItem('rpgGameSave');
-
+        console.log('从本地存储加载游戏数据:', saveData);
         if (saveData) {
           const parsedData = JSON.parse(saveData);
-
           // 更新游戏数据
-          Object.assign(gameData, parsedData);
+          if(!mixStoreData(parsedData).next){
+            handleAction('regame')
+            result.next = false;
+            return result
+          }
+          result.hasInitedData = true
           updateUI();
           showNotification('游戏已从本地存储加载！');
         } else {
@@ -4246,6 +4276,21 @@
         console.error('加载游戏失败:', error);
         showNotification('加载游戏失败！', true);
       }
+      return result
+    }
+
+    function mixStoreData(storeData={}){
+      let result = {next:true,}
+      try{
+        Object.assign(gameData, storeData);
+      }catch(e){
+        result.error = e
+        console.error('导入游戏失败:', e);
+        result.next = false;
+        return result
+      }
+      initData()
+      return result
     }
 
     // 导出存档
@@ -4389,7 +4434,7 @@
         })
         gameData.currentEvent = {
           title:'你启用了测试方法，直达最终BOSS前！',
-          description:'进行酣畅淋漓的测试吧',
+          description:`进行酣畅淋漓的测试吧！`,
           actions:[
             {type:'startBattle',text:"最终之战"}
           ]
@@ -4424,7 +4469,7 @@
         }
         gameData.currentEvent = {
           title:'你启用了测试方法，获得了伟力！',
-          description:'进行酣畅淋漓的测试吧',
+          description:`进行酣畅淋漓的测试吧`,
           actions:[
             {type:'explore',text:'你的世界，启动！'}
           ]

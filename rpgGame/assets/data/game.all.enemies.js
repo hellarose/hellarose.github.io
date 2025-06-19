@@ -172,7 +172,6 @@ const rpgGameEnemyData = [
         ...Array.from({ length: 10 }).map((m, i) => {
           let lvNum = i + 1;
           return {
-            id: `cur-gold-attack-lv${lvNum}`,
             name: `财富攻击Lv${lvNum}`,
             rate: 20 / lvNum,
             quantity: 1,
@@ -220,8 +219,7 @@ const rpgGameEnemyData = [
     reward: {
       bigExp: 26, bigGold: 1,
       item: [
-        { name: '物品宝箱', rate: 80 },
-        { name: '技能宝箱', rate: 5 }
+        { name: '物品宝箱', rate: 80 }
       ],
       skill: [
         {
@@ -247,7 +245,7 @@ const rpgGameEnemyData = [
       bigExp: 36, bigGold: 6,
       item: [
         { name: '物品宝箱', rate: 10 },
-        { name: '技能宝箱', rate: 5 }
+        { name: '技能宝箱', rate: 10 }
       ],
     }
   },
@@ -263,7 +261,7 @@ const rpgGameEnemyData = [
       bigEold: Math.floor(Math.random() * 20) + 1,
       item: [
         { name: '物品宝箱', rate: 100 },
-        { name: '技能宝箱', rate: 5 }
+        { name: '技能宝箱', rate: 20 }
       ],
       skill: [
         {
@@ -329,7 +327,7 @@ const rpgGameEnemyData = [
       ],
       item: [
         { name: '物品宝箱', rate: 20 },
-        { name: '技能宝箱', rate: 5 },
+        { name: '技能宝箱', rate: 10 },
         ...Array.from({ length: 10 }).map((m, i) => {
           let lvNum = i + 1;
           return {
@@ -388,7 +386,7 @@ const rpgGameEnemyData = [
       ],
       item: [
         { name: '物品宝箱', rate: 20 },
-        { name: '技能宝箱', rate: 5 },
+        { name: '技能宝箱', rate: 10 },
       ]
     }
   }
