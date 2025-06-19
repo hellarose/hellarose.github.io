@@ -331,7 +331,7 @@ function rpgGameWhatLevelUpReward(level=1){
   let reward = {}
   // range 设定一个等级范围内的升级属性变化 不给出end就是最后一个 range ， end认为是正无穷大
   // range 应互补相交 且 互补为全部等级
-  let theRange = rpgGameLevelUpReward.find(item=>item.type=='range' && item.start<=level && (item.end?(level<=item.end):true))
+  let theRange = rpgGamePlayerLevelUpRewardData.find(item=>item.type=='range' && item.start<=level && (item.end?(level<=item.end):true))
   // 特殊配置 dounbleProp 与 tenningProp 分别为 将当前属性翻倍 和 乘以 10
   // funnyProp 为毁灭性配置 对应改配置涵盖属性 可得到任意大的提升
   let thePropsReward = theRange.reward
@@ -351,7 +351,7 @@ function rpgGameWhatLevelUpReward(level=1){
 
   // 设 single 为 skill 或 给出多项进行选择的类目 不直接给属性
   // 对特定等级 single 最多存在一个
-  let theSingle = rpgGameLevelUpReward.find(item=>item.type=='single' && item.value==level)
+  let theSingle = rpgGamePlayerLevelUpRewardData.find(item=>item.type=='single' && item.value==level)
   if(theSingle){
     reward.skill = reward.skill;
     reward.options = theSingle.options;
@@ -361,7 +361,7 @@ function rpgGameWhatLevelUpReward(level=1){
 
   // perFrom 类似 single 从 from 等级起 每 length 触发一次 奖励形式与 single 逻辑结构一致
   // form length 相同的 perFrom 不可共存 反之 from  length 至少有一个不同时 可共存
-  let perFroms = rpgGameLevelUpReward.filter(m=>m.type==='perFrom' && m.from <= level && ((level - m.from) % m.length === 0))
+  let perFroms = rpgGamePlayerLevelUpRewardData.filter(m=>m.type==='perFrom' && m.from <= level && ((level - m.from) % m.length === 0))
   perFroms.forEach(perSet=>{
     if(perSet.skill){
       if(reward.skill){

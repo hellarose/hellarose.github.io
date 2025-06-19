@@ -198,7 +198,7 @@
       <div class="event-description" id="levelup-description">
         恭喜你升到了 <span id="new-level">2</span> 级！请选择一项奖励：
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions" id="levelup-reward-options">
         <button class="action-btn" id="levelup-hp">增加生命值</button>
         <button class="action-btn" id="levelup-attack">增加攻击力</button>
         <button class="action-btn" id="levelup-defend">增加防御力</button>
@@ -433,6 +433,7 @@
       levelupModal: document.getElementById('levelup-modal'),
       newLevel: document.getElementById('new-level'),
       levelupDescription: document.getElementById('levelup-description'),
+      levelupRewardOptions:document.getElementById("levelup-reward-options"),
       levelupHp: document.getElementById('levelup-hp'),
       levelupAttack: document.getElementById('levelup-attack'),
       levelupDefend: document.getElementById('levelup-defend'),
@@ -3827,16 +3828,30 @@
     // 检查并处理升级
     function handleLevelUp() {
       if (gameData.player.exp >= gameData.player.nextLevelExp) {
+        let levelReward = rpgGameWhatLevelUpReward(gameData.player.level+1)
         // 升级自然增长攻防生命值
         let attackBefore = gameData.player.attack
         let defendBefore = gameData.player.defend
         let maxHpBefore = gameData.player.maxHp
         let hpBefore = gameData.player.hp
 
-        gameData.player.attack++
-        gameData.player.defend++
-        gameData.player.maxHp++;
-        gameData.player.hp++
+        gameData.player.attack+=(levelReward.attack||0)
+        gameData.player.defend+=(levelReward.defend||0)
+        gameData.player.maxHp+=(levelReward.hp||0);
+        gameData.player.hp+=(levelReward.hp||0)
+        if(levelReward.doubleProp){
+          gameData.player.props.forEach(k=>{
+            gameData.player.props[k] *= 2
+          })
+        }else if(levelReward.tenningProp){
+          gameData.player.props.forEach(k=>{
+            gameData.player.props[k] *= 10
+          })
+        }else if(levelReward.funnyProp){
+          gameData.player.props.forEach(k=>{
+            gameData.player.props[k] *= 1e4;
+          })
+        }
         let tool = [
           ['attack', attackBefore, gameData.player.attack],
           ['defend', defendBefore, gameData.player.defend],
@@ -3854,19 +3869,29 @@
             method: 'levelUp',
           })
         });
-
-        setTimeout(showLevelUpModal, 1500);
+        gameData.player.level++;
+        if(levelReward.item){}
+        if(levelReward.skill){}
+        const levelUpRewardOptionsConfig = {
+          options:levelReward.options,
+          propOptions:levelReward.propOptions,
+          specialOptions:levelReward.specialOptions,
+        }
+        setTimeout(()=>showLevelUpModal(levelUpRewardOptionsConfig), 1500);
       }
     }
     // 显示升级模态框
-    function showLevelUpModal() {
+    function showLevelUpModal(optionConfig={}) {
+        if(!(optionConfig.options && optionConfig.options.length)){
+          return
+        }
       elements.newLevel.textContent = gameData.player.level + 1;
       elements.levelupModal.style.display = 'flex';
+
     }
 
     // 选择升级奖励
     function selectLevelUpReward(type) {
-      gameData.player.level++;
       let gains = [];
       switch (type) {
         case 'hp': {
@@ -3934,7 +3959,7 @@
           gains.push(`防御力上升${delta}点！`)
           break;
         }
-        case 'skill':
+        case 'skill':{
           // 从可用技能中随机选择一个新技能
           const availableSkills = gameData.lvupRewardSkills.filter(skill =>
             !gameData.player.skills.some(playerSkill => playerSkill.name === skill)
@@ -3960,6 +3985,9 @@
             gains.push(`没有可用技能！已自动转为3点${replacedReward === 'hp' ? '生命值' : replacedReward === 'defend' ? '防御力' : '攻击力'}！`)
           }
           break;
+        }
+        case 'prop':{break;}
+        case 'specialProp':{break;}
       }
 
       // 重置经验值
@@ -4477,6 +4505,10 @@
           ]
         }
         updateUI()
+      },
+      levelUp(){
+        gameData.player.exp += gameData.player.nextLevelExp;
+        handleLevelUp()
       }
     }
   </script>
