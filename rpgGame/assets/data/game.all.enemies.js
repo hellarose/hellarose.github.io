@@ -3,11 +3,11 @@ const rpgGameEnemyData = [
     id: "road1",
     name: "路边一条",
     icon: rpgGameIconData.eMo,
-    hp: 8,
-    maxHp: 8,
-    attack: 2,
+    hp: 4,
+    maxHp: 4,
+    attack: 1,
     reward: {
-      exp: 10, gold: 5, item: [
+      exp: 5, gold: 5, item: [
         { name: '物品宝箱', rate: 5 }
       ], equip: [
         {
@@ -25,11 +25,11 @@ const rpgGameEnemyData = [
     id: "road2",
     name: "路边一筒",
     icon: rpgGameIconData.guiMian,
-    hp: 10,
-    maxHp: 10,
-    attack: 3,
+    hp: 3,
+    maxHp: 3,
+    attack: 2,
     reward: {
-      exp: 15, gold: 8, item: [
+      exp: 5, gold: 5, item: [
         { name: '物品宝箱', rate: 5 }
       ], equip: [
         {
@@ -47,11 +47,11 @@ const rpgGameEnemyData = [
     id: "road3",
     name: "路边一万",
     icon: rpgGameIconData.xiaoChou,
-    hp: 12,
-    maxHp: 12,
-    attack: 4,
+    hp: 2,
+    maxHp: 2,
+    attack: 3,
     reward: {
-      exp: 20, gold: 12, item: [
+      exp: 5, gold: 5, item: [
         { name: '物品宝箱', rate: 5 }
       ], equip: [
         {
@@ -69,11 +69,11 @@ const rpgGameEnemyData = [
     id: "goblin1",
     name: "哥布木",
     icon: rpgGameIconData.youLing,
-    hp: 15,
-    maxHp: 15,
-    attack: 5,
+    hp: 4,
+    maxHp: 4,
+    attack: 2,
     reward: {
-      exp: 25, gold: 15, item: [
+      exp: 6, gold: 6, item: [
         { name: '物品宝箱', rate: 10 }
       ], equip: [
         {
@@ -91,11 +91,11 @@ const rpgGameEnemyData = [
     id: "goblin2",
     name: "哥布林",
     icon: rpgGameIconData.waiXingRen,
-    hp: 18,
-    maxHp: 18,
-    attack: 6,
+    hp: 3,
+    maxHp: 3,
+    attack: 3,
     reward: {
-      exp: 30, gold: 18, item: [
+      exp: 6, gold: 6, item: [
         { name: '物品宝箱', rate: 10 }
       ], equip: [
         {
@@ -113,11 +113,11 @@ const rpgGameEnemyData = [
     id: "goblin3",
     name: "哥布森",
     icon: rpgGameIconData.jiQiRen,
-    hp: 20,
-    maxHp: 20,
-    attack: 7,
+    hp: 4,
+    maxHp: 4,
+    attack: 3,
     reward: {
-      bigExp: 5, bigGold: 1, item: [
+      bigExp: 3, bigGold: 3, item: [
         { name: '物品宝箱', rate: 20 }
       ], equip: [
         {
@@ -135,11 +135,11 @@ const rpgGameEnemyData = [
     id: "stone1",
     name: "哥石木",
     icon: rpgGameIconData.piFengRen,
-    hp: 25,
-    maxHp: 25,
-    attack: 8,
+    hp: 5,
+    maxHp: 5,
+    attack: 3,
     reward: {
-      exp: 80, gold: 80, item: [
+      exp: 8, gold: 8, item: [
         { name: '物品宝箱', rate: 10 }
       ]
     }
@@ -148,11 +148,11 @@ const rpgGameEnemyData = [
     id: "stone2",
     name: "哥石林",
     icon: rpgGameIconData.lvPiRen,
-    hp: 30,
-    maxHp: 30,
-    attack: 9,
+    hp: 5,
+    maxHp: 5,
+    attack: 4,
     reward: {
-      exp: 90, gold: 90, item: [
+      exp: 9, gold: 9, item: [
         { name: '物品宝箱', rate: 10 }
       ]
     }
@@ -161,13 +161,14 @@ const rpgGameEnemyData = [
     id: "boss1",
     name: "哥石森",
     icon: rpgGameIconData.kuLou,
-    hp: 50,
-    maxHp: 50,
-    attack: 12,
+    hp: 6,
+    maxHp: 6,
+    attack: 6,
     isBoss: true,
     reward: {
-      bigExp: 100, bigGold: 10, item: [
+      bigExp: 60, bigGold: 1, item: [
         { name: '物品宝箱', rate: 20 },
+        { name: '技能宝箱', rate: 10 },
         ...Array.from({ length: 10 }).map((m, i) => {
           let lvNum = i + 1;
           return {
@@ -176,11 +177,8 @@ const rpgGameEnemyData = [
             rate: 20 / lvNum,
             quantity: 1,
           }
-        }),
+        })
       ],
-      skill: [
-        { name: '技能盲盒', rate: 10 }
-      ]
     }
   },
   // 弟剪木 
@@ -188,11 +186,11 @@ const rpgGameEnemyData = [
     id: "djm1",
     name: "弟剪木",
     icon: rpgGameIconData.kuLou,
-    hp: 30,
-    maxHp: 30,
-    attack: 6,
+    hp: 8,
+    maxHp: 8,
+    attack: 3,
     reward: {
-      exp: 50, gold: 200, item: [
+      exp: 11, gold: 11, item: [
         { name: '物品宝箱', rate: 20 }
       ]
     }
@@ -202,11 +200,11 @@ const rpgGameEnemyData = [
     id: "djl2",
     name: "弟剪林",
     icon: rpgGameIconData.kuLou,
-    hp: 12,
-    maxHp: 12,
-    attack: 30,
+    hp: 10,
+    maxHp: 10,
+    attack: 2,
     reward: {
-      exp: 100, gold: 20, item: [
+      exp: 12, gold: 12, item: [
         { name: '物品宝箱', rate: 20 }
       ]
     }
@@ -216,13 +214,14 @@ const rpgGameEnemyData = [
     id: "djs3",
     name: "弟剪森",
     icon: rpgGameIconData.kuLou,
-    hp: 800,
-    maxHp: 800,
-    attack: 1,
+    hp: 50,
+    maxHp: 50,
+    attack: 5,
     reward: {
-      bigExp: 1, bigGold: 10,
+      bigExp: 26, bigGold: 1,
       item: [
-        { name: '物品宝箱', rate: 80 }
+        { name: '物品宝箱', rate: 80 },
+        { name: '技能宝箱', rate: 5 }
       ],
       skill: [
         {
@@ -232,8 +231,7 @@ const rpgGameEnemyData = [
         {
           name: "果弹",
           rate: 5,
-        },
-        { name: '技能盲盒', rate: 5 }
+        }
       ],
     }
   },
@@ -242,38 +240,36 @@ const rpgGameEnemyData = [
     id: "djc000",
     name: "弟剪吹",
     icon: "✂",
-    hp: 666,
-    maxHp: 666,
+    hp: 66,
+    maxHp: 66,
     attack: 6,
     reward: {
-      bigExp: 6, bigGold: 6,
+      bigExp: 36, bigGold: 6,
       item: [
-        { name: '物品宝箱', rate: 10 }
+        { name: '物品宝箱', rate: 10 },
+        { name: '技能宝箱', rate: 5 }
       ],
-      skill: [
-        { name: '技能盲盒', rate: 5 }
-      ]
     }
   },
   {
     id: "undefined",
     name: "undefined",
     icon: "404",
-    hp: Math.floor(Math.random() * 2000) + 1,
-    maxHp: 2500,
-    attack: Math.floor(Math.random() * 200) + 1,
+    hp: Math.floor(Math.random() * 200) + 1,
+    maxHp: 250,
+    attack: Math.floor(Math.random() * 80) + 1,
     reward: {
       bigExp: Math.floor(Math.random() * 200) + 1,
-      bigEold: Math.floor(Math.random() * 100) + 1,
+      bigEold: Math.floor(Math.random() * 20) + 1,
       item: [
-        { name: '物品宝箱', rate: 100 }
+        { name: '物品宝箱', rate: 100 },
+        { name: '技能宝箱', rate: 5 }
       ],
       skill: [
         {
           name: "掷骰子",
           rate: 5,
-        },
-        { name: '技能盲盒', rate: 50 }
+        }
       ],
       equip: [
         {
@@ -314,7 +310,7 @@ const rpgGameEnemyData = [
     attack: 40,
     isBoss: true,
     reward: {
-      bigExp: 100, bigGold: 10,
+      bigExp: 100, bigGold: 1,
       equip: [
         {
           id: "buxi",
@@ -329,11 +325,11 @@ const rpgGameEnemyData = [
         {
           name: "欢愉",
           rate: 5,
-        },
-        { name: '技能盲盒', rate: 5 },
+        }
       ],
       item: [
         { name: '物品宝箱', rate: 20 },
+        { name: '技能宝箱', rate: 5 },
         ...Array.from({ length: 10 }).map((m, i) => {
           let lvNum = i + 1;
           return {
@@ -388,11 +384,11 @@ const rpgGameEnemyData = [
         {
           name: "龙吟",
           rate: 5,
-        },
-        { name: '技能盲盒', rate: 5 }
+        }
       ],
       item: [
-        { name: '物品宝箱', rate: 20 }
+        { name: '物品宝箱', rate: 20 },
+        { name: '技能宝箱', rate: 5 },
       ]
     }
   }

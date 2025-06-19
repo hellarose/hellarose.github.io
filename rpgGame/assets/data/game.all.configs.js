@@ -59,11 +59,11 @@ const rpgGameDamageTypeMapper = {
 
 const rpgGameBasePlayerData = {
   name: "勇者",
-  hp: 50,
-  maxHp: 50,
-  attack: 5,
-  defend: 3,
-  gold: 10,
+  hp: 4,
+  maxHp: 4,
+  attack: 1,
+  defend: 0,
+  gold: 0,
   exp: 0,
   level: 1,
   nextLevelExp: 10,
@@ -73,9 +73,6 @@ const rpgGameBasePlayerData = {
     accessory: null
   },
   inventory: [
-    { name: "回复药", quantity: 3, },
-    { name: "土炸药", quantity: 2, },
-    { name: "强化药", quantity: 1, },
     { name: "物品宝箱", quantity: 1, }
   ],
   skills: [
@@ -101,6 +98,7 @@ const rpgGameBaseCombatData = {
   active: false,
   enemy: null,
   totalRound: 0,
+  isPlayerRound:true,
   currentTurn: 'player',
   playerRoundNum: 0,
   enemyRoundNum: 0,
