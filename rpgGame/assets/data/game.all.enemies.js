@@ -348,21 +348,19 @@ const rpgGameEnemyData = [
     maxHp: 120,
     attack: 20,
     isBoss: true,
-    roundAi: {
-      onFightStart: {
-        status: ['大恢复祝福']
-      },
-      onRoundStart: {},
-      onRound: {
-        attack: 1, // 进行一次普攻,
-        skill: {
-          rate: 0.8, // 80%的概率使用技能
-          count: 2,// 使用技能的次数
-        }, // 技能使用
-      },
-      onRoundEnd: {},
+    onFightStart: {
+      status: ['大恢复祝福']
     },
-    skill: [
+    onRoundStart: {},
+    onRound: {
+      extraAttack: 1, // 进行一次普攻,
+      skill: {
+        rate: 0.8, // 80%的概率使用技能
+        count: 2,// 使用技能的次数
+      }, // 技能使用
+    },
+    onRoundEnd: {},
+    skills: [
       '龙吟', '火弹'
     ],
     status: ['大恢复祝福'],
@@ -389,5 +387,69 @@ const rpgGameEnemyData = [
         { name: '技能宝箱', rate: 10 },
       ]
     }
+  },{
+
+    id: "RoadSideKing",
+    name: "路边王",
+    icon: "👿",
+    hp: 1e4,
+    maxHp: 1e4,
+    attack: 1e3,
+    defend: 3e2,
+    isBoss: true,
+    onFightStart: {
+      status: ['大恢复祝福']
+    },
+    onRoundStart: {
+      bigAttackDamage: 20,
+      bigHpRecover: 20,
+    },
+    onRound: {
+
+      status: {
+        player: { '中毒': 2 },
+        enemy: { '恢复祝福': 1 },
+      },
+      extraAttack: 2,
+      skill:1,
+    },
+    onRoundEnd: {
+      absoluteDamage: 100,
+    },
+    onDeath:{
+      event:{
+        title: "一切都给本神陪葬吧！",
+        description: `路边王临死发出怒吼并向世界释放诅咒！`,
+        actions:[
+          { text: '故事的最后', type: 'lastStory' }
+        ]
+      },
+    },
+    skill: [
+      '神血弹', '错误的神术', "路边魔啸"
+    ],
+    inventory: [
+      { name: '魔化药剂' },
+      { name: '神力结晶' },
+      { name: '镇国大炮' },
+    ],
+    status: [{ name: '大恢复祝福', value: 3 }],
+    equipment: {
+      weapon: {
+        name: '亵渎之杖',
+        attack: 1000,
+        bigAttack: 50,
+      },
+      armor: {
+        name: '染血星袍',
+        defend: 1000,
+        bigDefend: 100,
+      },
+      accessory: {
+        name: '染血神目',
+        criticalRate: 90,
+        criticalDamage: 90,
+      },
+    },
   }
 ].filter(Boolean);
