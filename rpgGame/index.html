@@ -3882,9 +3882,9 @@
     }
     // 显示升级模态框
     function showLevelUpModal(optionConfig={}) {
-        if(!(optionConfig.options && optionConfig.options.length)){
-          return
-        }
+        // if(!(optionConfig.options && optionConfig.options.length)){
+        //   return
+        // }
       elements.newLevel.textContent = gameData.player.level + 1;
       elements.levelupModal.style.display = 'flex';
 
