@@ -51,6 +51,9 @@
           <button id="paste-save-btn" class="save-btn">
             <i class="fas fa-paste"></i>粘贴存档
           </button>
+          <button id="clear-save-btn" class="save-btn">
+            <i class="fas fa-clear"></i>清除存档
+          </button>
         </div>
       </div>
 
@@ -635,7 +638,7 @@
       document.getElementById('import-btn').addEventListener('click', () => importSave());
       document.getElementById('copy-save-btn').addEventListener('click', () => copySaveToClipboard());
       document.getElementById('paste-save-btn').addEventListener('click', () => pasteSaveFromClipboard());
-
+      document.getElementById('clear-save-btn').addEventListener('click', () => clearLocalSave());
       // 存档模态框按钮
       elements.saveModalConfirm.addEventListener('click', handleSaveOperation);
       elements.saveModalCancel.addEventListener('click', () => elements.saveModal.style.display = 'none');
@@ -4306,6 +4309,9 @@
         console.error('存档操作失败:', error);
         showNotification('存档操作失败！', true);
       }
+    }
+    function clearLocalSave(){
+      confirm('确定要清除本地存档吗？') && localStorage.removeItem('rpgGameSave')
     }
 
     // 显示通知
