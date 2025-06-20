@@ -14,9 +14,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 5,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -36,9 +33,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 5,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -58,9 +52,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 5,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -80,9 +71,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 10,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -102,9 +90,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 10,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -124,9 +109,6 @@ const rpgGameEnemyData = [
           type: 'accessory',
           name: "奇怪吊坠",
           rate: 20,
-          icon: rpgGameIconData.diaoZhui,
-          criticalRate: 30,
-          criticalDamage: 50,
         }
       ]
     }
@@ -271,27 +253,17 @@ const rpgGameEnemyData = [
       ],
       equip: [
         {
-          id: "datouziWp",
           name: "单面骰子",
-          icon: rpgGameIconData.touZi,
-          attack: Math.floor(Math.random() * 200) + 1,
           type: 'weapon',
           rate: 5
         },
         {
-          id: "datouziAm",
           name: "宽面骰子",
-          icon: rpgGameIconData.touZi,
-          defend: Math.floor(Math.random() * 200) + 1,
           type: 'armor',
           rate: 5
         },
         {
-          id: "datouziAcs",
           name: "骰子吊坠",
-          icon: rpgGameIconData.touZi,
-          criticalRate: Math.floor(Math.random() * 100) + 1,
-          criticalDamage: Math.floor(Math.random() * 100),
           type: 'accessory',
           rate: 5
         }

@@ -215,20 +215,20 @@ const rpgGamePlayerLevelUpRewardData = [
     value:30,
     reward:{
       options:[
-        {type:'item',name:'技能宝箱'},
-        {type:'item',name:'物品宝箱'},
-        {type:'prop',name:'额外属性'},
-        {type:'specialProp',name:'特殊属性'},
-      ],
+        {type:'item',name:'技能宝箱',icon:'技能',description:'获得技能宝箱'},
+        {type:'item',name:'物品宝箱',icon:'物品',description:'获得物品宝箱'},
+        {type:'prop',name:'额外属性',icon:'属性',description:'获得额外属性'},
+        {type:'specialProp',name:'特殊属性',icon:'特殊',description:'获得特殊属性'},
+      ].filter(Boolean),
       propOptions:[
-        {name:'大生命',prop:'bigHp',value:20,description:'增加 20 百分点的大生命'},
-        {name:'大攻击',prop:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
-        {name:'大防御',prop:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
-      ],
+        {name:'大生命',icon:'HP%',type:'bigHp',value:20,description:'增加 20 百分点的大生命'},
+        {name:'大攻击',icon:'ATK%',type:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
+        {name:'大防御',icon:'DEF%',type:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
+      ].filter(Boolean),
       specialOptions:[
-        {name:'暴击率',prop:'criticalRate',value:1,description:'增加1百分比的暴击率'},
-        {name:'暴击伤害',prop:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
-      ],
+        {name:'暴击率',icon:"暴击",type:'criticalRate',value:1,description:'增加1百分比的暴击率'},
+        {name:'暴击伤害',icon:"暴伤",type:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
+      ].filter(Boolean),
     }
   },
   {
@@ -244,21 +244,21 @@ const rpgGamePlayerLevelUpRewardData = [
     value:35,
     reward:{
       options:[
-        {type:'item',name:'技能宝箱'},
-        {type:'item',name:'物品宝箱'},
-        {type:'prop',name:'额外属性'},
-        {type:'specialProp',name:'特殊属性'},
-      ],
+        {type:'item',name:'技能宝箱',icon:'技能',description:'获得技能宝箱'},
+        {type:'item',name:'物品宝箱',icon:'物品',description:'获得物品宝箱'},
+        {type:'prop',name:'额外属性',icon:'属性',description:'获得额外属性'},
+        {type:'specialProp',name:'特殊属性',icon:'特殊',description:'获得特殊属性'},
+      ].filter(Boolean),
       propOptions:[
-        {name:'大生命',prop:'bigHp',value:20,description:'增加 20 百分点的大生命'},
-        {name:'大攻击',prop:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
-        {name:'大防御',prop:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
-      ],
+        {name:'大生命',icon:'HP%',type:'bigHp',value:20,description:'增加 20 百分点的大生命'},
+        {name:'大攻击',icon:'ATK%',type:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
+        {name:'大防御',icon:'DEF%',type:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
+      ].filter(Boolean),
       specialOptions:[
-        {name:'暴击率',prop:'criticalRate',value:1,description:'增加1百分比的暴击率'},
-        {name:'暴击伤害',prop:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
-        {name:'回合回复',prop:'hpRecover',value:1,description:'增加1点回合回复'},
-      ],
+        {name:'暴击率',icon:"暴击",type:'criticalRate',value:1,description:'增加1百分比的暴击率'},
+        {name:'暴击伤害',icon:"暴伤",type:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
+        {name:'回合回复',icon:"回复",type:'hpRecover',value:1,description:'增加1点回合回复'},
+      ].filter(Boolean),
     }
   },
   {
@@ -274,22 +274,22 @@ const rpgGamePlayerLevelUpRewardData = [
     value:40,
     reward:{
       options:[
-        {type:'item',name:'技能宝箱'},
-        {type:'item',name:'物品宝箱'},
-        {type:'prop',name:'额外属性'},
-        {type:'specialProp',name:'特殊属性'},
-      ],
+        {type:'item',name:'技能宝箱',icon:'技能',description:'获得技能宝箱'},
+        {type:'item',name:'物品宝箱',icon:'物品',description:'获得物品宝箱'},
+        {type:'prop',name:'额外属性',icon:'属性',description:'获得额外属性'},
+        {type:'specialProp',name:'特殊属性',icon:'特殊',description:'获得特殊属性'},
+      ].filter(Boolean),
       propOptions:[
-        {name:'大生命',prop:'bigHp',value:20,description:'增加 20 百分点的大生命'},
-        {name:'大攻击',prop:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
-        {name:'大防御',prop:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
-      ],
+        {name:'大生命',icon:'HP%',type:'bigHp',value:20,description:'增加 20 百分点的大生命'},
+        {name:'大攻击',icon:'ATK%',type:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
+        {name:'大防御',icon:'DEF%',type:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
+      ].filter(Boolean),
       specialOptions:[
-        {name:'暴击率',prop:'criticalRate',value:1,description:'增加1百分比的暴击率'},
-        {name:'暴击伤害',prop:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
-        {name:'回合回复',prop:'hpRecover',value:1,description:'增加1点回合回复'},
-        {name:'回合追击',prop:'chaseAttack',value:1,description:'增加1点回合追击'},
-      ],
+        {name:'暴击率',icon:"暴击",type:'criticalRate',value:1,description:'增加1百分比的暴击率'},
+        {name:'暴击伤害',icon:"暴伤",type:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
+        {name:'回合回复',icon:"回复",type:'hpRecover',value:1,description:'增加1点回合回复'},
+        {name:'回合追击',icon:"追击",type:'chaseAttack',value:1,description:'增加1点回合追击'},
+      ].filter(Boolean),
     }
   },
   {
@@ -305,24 +305,24 @@ const rpgGamePlayerLevelUpRewardData = [
     length:5,
     reward:{
       options:[
-        {type:'item',name:'技能宝箱'},
-        {type:'item',name:'物品宝箱'},
-        {type:'prop',name:'额外属性'},
-        {type:'specialProp',name:'特殊属性'},
-      ],
+        {type:'item',name:'技能宝箱',icon:'技能',description:'获得技能宝箱'},
+        {type:'item',name:'物品宝箱',icon:'物品',description:'获得物品宝箱'},
+        {type:'prop',name:'额外属性',icon:'属性',description:'获得额外属性'},
+        {type:'specialProp',name:'特殊属性',icon:'特殊',description:'获得特殊属性'},
+      ].filter(Boolean),
       propOptions:[
-        {name:'大生命',prop:'bigHp',value:20,description:'增加 20 百分点的大生命'},
-        {name:'大攻击',prop:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
-        {name:'大防御',prop:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
-      ],
+        {name:'大生命',icon:'HP%',type:'bigHp',value:20,description:'增加 20 百分点的大生命'},
+        {name:'大攻击',icon:'ATK%',type:'bigAttack',value:20,description:'增加 20 百分点的大攻击'},
+        {name:'大防御',icon:'DEF%',type:'bigDefend',value:20,description:'增加 20 百分点的大防御'},
+      ].filter(Boolean),
       specialOptions:[
-        {name:'暴击率',prop:'criticalRate',value:1,description:'增加1百分比的暴击率'},
-        {name:'暴击伤害',prop:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
-        {name:'回合回复',prop:'hpRecover',value:1,description:'增加1点回合回复'},
-        {name:'回合追击',prop:'chaseAttack',value:1,description:'增加1点回合追击'},
-        {name:'闪避率',prop:'dodgeRate',value:1,description:'增加1百分比的闪避率'},
-        {name:'额外绝对伤害',prop:'extraAbsoluteDamage',value:1,description:'增加1百分比的额外绝对伤害'},
-      ],
+        {name:'暴击率',icon:"暴击",type:'criticalRate',value:1,description:'增加1百分比的暴击率'},
+        {name:'暴击伤害',icon:"暴伤",type:'criticalDamage',value:1,description:'增加1百分比的暴击伤害'},
+        {name:'回合回复',icon:"回复",type:'hpRecover',value:1,description:'增加1点回合回复'},
+        {name:'回合追击',icon:"追击",type:'chaseAttack',value:1,description:'增加1点回合追击'},
+        {name:'闪避率',icon:"闪避",type:'dodgeRate',value:1,description:'增加1百分比的闪避率'},
+        {name:'额外绝对伤害',icon:"绝伤",type:'extraAbsoluteDamage',value:1,description:'增加1百分比的额外绝对伤害'},
+      ].filter(Boolean),
     }
   },
 ].filter(Boolean);
@@ -353,10 +353,10 @@ function rpgGameWhatLevelUpReward(level=1){
   // 对特定等级 single 最多存在一个
   let theSingle = rpgGamePlayerLevelUpRewardData.find(item=>item.type=='single' && item.value==level)
   if(theSingle){
-    reward.skill = reward.skill;
-    reward.options = theSingle.options;
-    reward.propOptions = theSingle.propOptions;
-    reward.specialOptions = theSingle.specialOptions;
+    reward.skill = theSingle.reward.skill;
+    reward.options = theSingle.reward.options;
+    reward.propOptions = theSingle.reward.propOptions;
+    reward.specialOptions = theSingle.reward.specialOptions;
   }
 
   // perFrom 类似 single 从 from 等级起 每 length 触发一次 奖励形式与 single 逻辑结构一致
@@ -366,15 +366,15 @@ function rpgGameWhatLevelUpReward(level=1){
     if(perSet.skill){
       if(reward.skill){
         // 合并去重
-        reward.skill = [...new Set([...reward.skill, ...perSet.skill])]
+        reward.skill = [...new Set([...reward.skill, ...perSet.reward.skill])]
       }else{
-        reward.skill = perSet.skill
+        reward.skill = perSet.reward.skill
       }
     }
-    if(perSet.options){
+    if(perSet.reward.options){
       if(reward.options){
         // 查询是否有同名选项 存在则决定为数值更高的
-        perSet.options.forEach(option=>{
+        perSet.reward.options.forEach(option=>{
           let find = reward.options.find(item=>item.name === option.name)
           if(find){
             if(find.value < option.value){
@@ -385,9 +385,9 @@ function rpgGameWhatLevelUpReward(level=1){
           }
         })
       }else{
-        reward.options = perSet.options
-        reward.propOptions = perSet.propOptions;
-        reward.specialOptions = perSet.specialOptions;
+        reward.options = perSet.reward.options
+        reward.propOptions = perSet.reward.propOptions;
+        reward.specialOptions = perSet.reward.specialOptions;
       }
     }
   })
@@ -396,6 +396,9 @@ function rpgGameWhatLevelUpReward(level=1){
   }
   if(reward.skill && !reward.skill.length){
     delete reward.skill
+  }
+  if(reward.equip && !reward.equip.length){
+    delete reward.equip
   }
   if(reward.options && !reward.options.length){
     delete reward.options
@@ -407,4 +410,16 @@ function rpgGameWhatLevelUpReward(level=1){
     delete reward.specialOptions
   }
   return reward
+}
+
+const rpgGamePropMapper = {
+  hp:'生命值',
+  maxHp:'最大生命值',
+  attack:'攻击力',
+  defend:'防御力',
+  bigHp:'大生命',
+  bigAttack:'大攻击',
+  bigDefend:'大防御',
+  criticalRate:'暴击率',
+  criticalDamage:'暴击伤害',
 }

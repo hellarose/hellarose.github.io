@@ -54,6 +54,7 @@ const rgpGameCommonItemBoxResults = [
 const rgpGameCommonSkillBoxResults = [
   { resultType: 'skill', name: '毒球', rate: 20, },
   { resultType: 'skill', name: '冰弹', rate: 20, },
+  { resultType: 'skill', name: '水弹Lv3', rate: 20, },
   { resultType: 'skill', name: '自然祝福', rate: 80, },
   // {resultType:'skill',name:'',rate:10,},
   // {resultType:'skill',name:'',rate:5,},
