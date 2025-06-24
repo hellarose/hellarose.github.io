@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHC天车地图绘制工具</title>
+    <script src="./pixi@7.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-gap: 20px;
+        }
+        
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            color: #bdc3c7;
+            font-size: 1.1rem;
+        }
+        
+        .panel {
+            background: rgba(30, 40, 60, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #3498db;
+        }
+        
+        .tools {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .tool-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tool-btn:hover {
+            background: linear-gradient(to right, #2980b9, #2573a7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .tool-btn.active {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #bdc3c7;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(20, 30, 48, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .map-container {
+            position: relative;
+            height: 80vh;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        
+        #mapCanvas {
+            width: 100%;
+            height: 100%;
+            background: #0f1923;
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .control-btn {
+            background: rgba(30, 40, 60, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(52, 152, 219, 0.8);
+            transform: scale(1.1);
+        }
+        
+        footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            position: absolute;
+            background: rgba(30, 40, 60, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 300px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .simulation-controls {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            background: rgba(30, 40, 60, 0.9);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+        
+        .sim-btn {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(30, 40, 60, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>OHC天车地图绘制工具</h1>
+            <p class="subtitle">基于Pixi.js的轨道布局与地标管理系统</p>
+        </header>
+        
+        <aside class="panel">
+            <h2 class="panel-title">绘图工具</h2>
+            <div class="tools">
+                <button id="drawTrackBtn" class="tool-btn active">
+                    <span>绘制轨道</span>
+                </button>
+                <button id="drawCurveBtn" class="tool-btn">
+                    <span>绘制曲线</span>
+                </button>
+                <button id="addLandmarkBtn" class="tool-btn">
+                    <span>添加地标</span>
+                </button>
+                <button id="addObstacleBtn" class="tool-btn">
+                    <span>添加障碍物</span>
+                </button>
+                <button id="selectBtn" class="tool-btn">
+                    <span>选择/移动</span>
+                </button>
+                <button id="simulateBtn" class="tool-btn">
+                    <span>模拟运行</span>
+                </button>
+            </div>
+            
+            <div class="input-group">
+                <label for="landmarkCode">地标码</label>
+                <input type="text" id="landmarkCode" placeholder="输入地标码 (如 RFID001)">
+            </div>
+            
+            <div class="input-group">
+                <label for="landmarkType">地标类型</label>
+                <select id="landmarkType">
+                    <option value="loading">装载点</option>
+                    <option value="unloading">卸载点</option>
+                    <option value="checkpoint">检查点</option>
+                    <option value="junction">道岔</option>
+                    <option value="trackpoint">轨道点</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="trackWidth">轨道宽度</label>
+                <input type="range" id="trackWidth" min="2" max="10" value="4">
+            </div>
+            
+            <div class="input-group">
+                <label for="gridSnapping">栅格吸附</label>
+                <select id="gridSnapping">
+                    <option value="on">开启</option>
+                    <option value="off">关闭</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="pointSpacing">轨道点间距</label>
+                <input type="range" id="pointSpacing" min="20" max="100" value="40">
+                <span id="spacingValue">40px</span>
+            </div>
+            
+            <button id="saveBtn" class="tool-btn" style="margin-top: 20px; background: linear-gradient(to right, #9b59b6, #8e44ad);">
+                <span>保存配置</span>
+            </button>
+            
+            <button id="resetBtn" class="tool-btn" style="background: linear-gradient(to right, #e74c3c, #c0392b);">
+                <span>重置地图</span>
+            </button>
+        </aside>
+        
+        <main class="panel">
+            <h2 class="panel-title">天车轨道地图</h2>
+            <div class="map-container">
+                <div id="mapCanvas"></div>
+                
+                <div class="controls">
+                    <div class="control-btn" id="zoomIn">+</div>
+                    <div class="control-btn" id="zoomOut">-</div>
+                    <div class="control-btn" id="centerMap">↺</div>
+                </div>
+                
+                <!-- 模拟控制面板 -->
+                <div class="simulation-controls" id="simulationControls" style="display: none;">
+                    <button id="startSimBtn" class="sim-btn">开始</button>
+                    <button id="pauseSimBtn" class="sim-btn">暂停</button>
+                    <button id="stopSimBtn" class="sim-btn">停止</button>
+                    <input type="range" id="simSpeed" min="1" max="10" value="5" style="width: 120px;">
+                    <span style="color: white; margin-left: 10px;">速度</span>
+                </div>
+                
+                <div class="status-bar">
+                    <div class="coordinates">坐标: (0, 0)</div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #3498db;"></div>
+                            <span>轨道</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #2ecc71;"></div>
+                            <span>地标点</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #e74c3c;"></div>
+                            <span>障碍物</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #f1c40f;"></div>
+                            <span>轨道点</span>
+                        </div>
+                    </div>
+                    <div class="mode">模式: 绘制轨道</div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>OHC天车地图绘制工具 v1.0 | 基于Pixi.js | 支持轨道布局、地标管理与运行模拟</p>
+        </footer>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // 初始化Pixi应用
+        const app = new PIXI.Application({
+            width: window.innerWidth * 0.75,
+            height: window.innerHeight * 0.8,
+            backgroundColor: 0x0f1923,
+            antialias: true,
+            resolution: window.devicePixelRatio || 1,
+            eventMode: 'static'
+        });
+        
+        document.getElementById('mapCanvas').appendChild(app.view);
+        
+        // 创建主容器
+        const mapContainer = new PIXI.Container();
+        app.stage.addChild(mapContainer);
+        
+        // 确保容器可交互
+        mapContainer.interactive = true;
+        mapContainer.hitArea = app.screen;
+        
+        // 栅格设置
+        const GRID_SIZE = 40;
+        
+        // 添加网格背景
+        function createGrid() {
+            const grid = new PIXI.Graphics();
+            const gridSize = GRID_SIZE;
+            const gridColor = 0x1e2a3a;
+            
+            for (let x = 0; x < app.screen.width; x += gridSize) {
+                grid.lineStyle(1, gridColor, 0.3);
+                grid.moveTo(x, 0);
+                grid.lineTo(x, app.screen.height);
+            }
+            
+            for (let y = 0; y < app.screen.height; y += gridSize) {
+                grid.lineStyle(1, gridColor, 0.3);
+                grid.moveTo(0, y);
+                grid.lineTo(app.screen.width, y);
+            }
+            
+            app.stage.addChildAt(grid, 0);
+            return grid;
+        }
+        
+        let grid = createGrid();
+        
+        // 地图状态
+        const mapState = {
+            mode: 'drawTrack',
+            currentTrack: null,
+            currentCurve: null,
+            landmarks: [],
+            obstacles: [],
+            tracks: [],
+            scale: 1,
+            crane: null,
+            cranePath: [],
+            simulationActive: false,
+            simulationSpeed: 5,
+            gridSnapping: true,
+            pointSpacing: 40,
+            controlPoints: [],
+            currentPathIndex: 0
+        };
+        
+        // 吸附到栅格
+        function snapToGrid(pos) {
+            if (!mapState.gridSnapping) return pos;
+            
+            return {
+                x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+                y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE
+            };
+        }
+        
+        // 事件处理器
+        function handlePointerDown(event) {
+            const rawPos = event.data.getLocalPosition(mapContainer);
+            const pos = snapToGrid(rawPos);
+            
+            switch(mapState.mode) {
+                case 'drawTrack':
+                    onTrackPointerDown(pos);
+                    break;
+                case 'drawCurve':
+                    onCurvePointerDown(pos);
+                    break;
+                case 'addLandmark':
+                    onLandmarkPointerDown(pos);
+                    break;
+                case 'addObstacle':
+                    onObstaclePointerDown(pos);
+                    break;
+            }
+        }
+        
+        function handlePointerMove(event) {
+            const pos = event.data.getLocalPosition(mapContainer);
+            document.querySelector('.coordinates').textContent = `坐标: (${Math.round(pos.x)}, ${Math.round(pos.y)})`;
+            
+            // 更新工具提示
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${event.clientX + 15}px`;
+            tooltip.style.top = `${event.clientY + 15}px`;
+            
+            if (mapState.mode === 'drawCurve' && mapState.controlPoints.length === 1) {
+                tooltip.textContent = '点击确定曲线终点';
+            } else if (mapState.mode === 'drawCurve' && mapState.controlPoints.length === 0) {
+                tooltip.textContent = '点击确定曲线起点';
+            } else if (mapState.mode === 'drawTrack') {
+                tooltip.textContent = '点击添加轨道点';
+            } else {
+                tooltip.textContent = `坐标: (${Math.round(pos.x)}, ${Math.round(pos.y)})`;
+            }
+            
+            // 曲线绘制预览
+            if (mapState.mode === 'drawCurve' && mapState.controlPoints.length === 1) {
+                if (!mapState.currentCurve) {
+                    mapState.currentCurve = new PIXI.Graphics();
+                    mapContainer.addChild(mapState.currentCurve);
+                }
+                
+                mapState.currentCurve.clear();
+                mapState.currentCurve.lineStyle(parseInt(document.getElementById('trackWidth').value), 0x3498db, 1);
+                mapState.currentCurve.moveTo(mapState.controlPoints[0].x, mapState.controlPoints[0].y);
+                
+                // 计算控制点（鼠标位置）
+                const controlPoint = snapToGrid(pos);
+                
+                // 绘制预览曲线
+                mapState.currentCurve.bezierCurveTo(
+                    controlPoint.x, controlPoint.y,
+                    controlPoint.x, controlPoint.y,
+                    pos.x, pos.y
+                );
+            }
+        }
+        
+        // 绑定事件
+        mapContainer.on('pointerdown', handlePointerDown);
+        mapContainer.on('pointermove', handlePointerMove);
+        mapContainer.on('pointerout', () => {
+            document.getElementById('tooltip').style.display = 'none';
+        });
+        
+        // 绘制轨道
+        function startDrawingTrack() {
+            mapState.mode = 'drawTrack';
+            document.querySelector('.mode').textContent = '模式: 绘制轨道';
+            mapState.controlPoints = [];
+        }
+        
+        function onTrackPointerDown(pos) {
+            if (!mapState.currentTrack) {
+                // 开始新轨道
+                mapState.currentTrack = new PIXI.Graphics();
+                mapState.currentTrack.lineStyle(parseInt(document.getElementById('trackWidth').value), 0x3498db, 1);
+                mapState.currentTrack.moveTo(pos.x, pos.y);
+                mapContainer.addChild(mapState.currentTrack);
+                
+                // 添加起点标记
+                const startMarker = createTrackPoint(pos.x, pos.y);
+                mapContainer.addChild(startMarker);
+                
+                // 添加到路径
+                mapState.cranePath.push({x: pos.x, y: pos.y});
+            } else {
+                // 继续绘制轨道
+                mapState.currentTrack.lineTo(pos.x, pos.y);
+                
+                // 添加轨道点
+                const pointMarker = createTrackPoint(pos.x, pos.y);
+                mapContainer.addChild(pointMarker);
+                
+                // 添加到路径
+                mapState.cranePath.push({x: pos.x, y: pos.y});
+                
+                // 在两点之间生成更多轨道点
+                const prevPoint = mapState.cranePath[mapState.cranePath.length - 2];
+                generateTrackPoints(prevPoint, pos);
+            }
+        }
+        
+        // 生成轨道点
+        function generateTrackPoints(start, end) {
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const steps = Math.floor(distance / mapState.pointSpacing);
+            
+            for (let i = 1; i < steps; i++) {
+                const ratio = i / steps;
+                const x = start.x + dx * ratio;
+                const y = start.y + dy * ratio;
+                
+                const trackPoint = createTrackPoint(x, y);
+                mapContainer.addChild(trackPoint);
+                
+                mapState.cranePath.push({x, y});
+            }
+        }
+        
+        // 创建轨道点
+        function createTrackPoint(x, y) {
+            const point = new PIXI.Graphics();
+            point.beginFill(0xf1c40f, 0.8);
+            point.drawCircle(0, 0, 3);
+            point.endFill();
+            point.position.set(x, y);
+            
+            return point;
+        }
+        
+        // 绘制曲线
+        function startDrawingCurve() {
+            mapState.mode = 'drawCurve';
+            document.querySelector('.mode').textContent = '模式: 绘制曲线';
+            mapState.controlPoints = [];
+        }
+        
+        function onCurvePointerDown(pos) {
+            if (mapState.controlPoints.length === 0) {
+                // 起点
+                mapState.controlPoints.push(pos);
+                
+                // 添加起点标记
+                const startMarker = createTrackPoint(pos.x, pos.y);
+                mapContainer.addChild(startMarker);
+            } 
+            else if (mapState.controlPoints.length === 1) {
+                // 终点
+                mapState.controlPoints.push(pos);
+                
+                // 添加终点标记
+                const endMarker = createTrackPoint(pos.x, pos.y);
+                mapContainer.addChild(endMarker);
+                
+                // 绘制曲线
+                drawCurve();
+                
+                // 重置控制点
+                mapState.controlPoints = [];
+                mapContainer.removeChild(mapState.currentCurve);
+                mapState.currentCurve = null;
+            }
+        }
+        
+        // 绘制曲线
+        function drawCurve() {
+            if (mapState.controlPoints.length < 2) return;
+            
+            const start = mapState.controlPoints[0];
+            const end = mapState.controlPoints[1];
+            
+            // 计算控制点（中点附近）
+            const midX = (start.x + end.x) / 2;
+            const midY = (start.y + end.y) / 2;
+            
+            // 创建曲线图形
+            const curve = new PIXI.Graphics();
+            curve.lineStyle(parseInt(document.getElementById('trackWidth').value), 0x3498db, 1);
+            curve.moveTo(start.x, start.y);
+            curve.bezierCurveTo(
+                midX, midY,
+                midX, midY,
+                end.x, end.y
+            );
+            mapContainer.addChild(curve);
+            
+            // 添加到轨道列表
+            mapState.tracks.push(curve);
+            
+            // 生成曲线上的轨道点
+            generateCurvePoints(start, end, midX, midY);
+        }
+        
+        // 生成曲线上的轨道点
+        function generateCurvePoints(start, end, cp1x, cp1y) {
+            const steps = Math.floor(Math.sqrt(
+                Math.pow(end.x - start.x, 2) + 
+                Math.pow(end.y - start.y, 2)
+            ) / mapState.pointSpacing);
+            
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = bezierPoint(start.x, cp1x, end.x, t);
+                const y = bezierPoint(start.y, cp1y, end.y, t);
+                
+                const point = createTrackPoint(x, y);
+                mapContainer.addChild(point);
+                
+                mapState.cranePath.push({x, y});
+            }
+        }
+        
+        // 计算贝塞尔曲线上的点
+        function bezierPoint(p0, p1, p2, t) {
+            return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+        }
+        
+        // 添加地标
+        function startAddingLandmark() {
+            mapState.mode = 'addLandmark';
+            document.querySelector('.mode').textContent = '模式: 添加地标';
+        }
+        
+        function onLandmarkPointerDown(pos) {
+            const code = document.getElementById('landmarkCode').value || `LM${mapState.landmarks.length + 1}`;
+            const type = document.getElementById('landmarkType').value;
+            
+            // 创建地标
+            const landmark = createLandmark(pos.x, pos.y, code, type);
+            mapContainer.addChild(landmark);
+            
+            mapState.landmarks.push({
+                x: pos.x,
+                y: pos.y,
+                code: code,
+                type: type,
+                graphic: landmark
+            });
+            
+            // 更新地标码输入框
+            document.getElementById('landmarkCode').value = `LM${mapState.landmarks.length + 1}`;
+        }
+        
+        function createLandmark(x, y, code, type) {
+            const colors = {
+                'loading': 0x2ecc71,
+                'unloading': 0xe67e22,
+                'checkpoint': 0x3498db,
+                'junction': 0x9b59b6,
+                'trackpoint': 0xf1c40f
+            };
+            
+            const container = new PIXI.Container();
+            container.position.set(x, y);
+            container.interactive = true;
+            container.buttonMode = true;
+            
+            const circle = new PIXI.Graphics();
+            circle.beginFill(colors[type]);
+            circle.drawCircle(0, 0, type === 'trackpoint' ? 3 : 8);
+            circle.endFill();
+            container.addChild(circle);
+            
+            // 仅非轨道点类型添加额外元素
+            let outerCircle = null;
+            let label = null;
+            
+            if (type !== 'trackpoint') {
+                outerCircle = new PIXI.Graphics();
+                outerCircle.lineStyle(2, colors[type], 0.7);
+                outerCircle.drawCircle(0, 0, 12);
+                outerCircle.endFill();
+                container.addChild(outerCircle);
+                
+                label = new PIXI.Text(code, {
+                    fontFamily: 'Arial',
+                    fontSize: 12,
+                    fill: 0xffffff,
+                    align: 'center',
+                    fontWeight: 'bold'
+                });
+                label.anchor.set(0.5);
+                label.position.set(0, 20);
+                container.addChild(label);
+            }
+            
+            // 添加悬停效果 - 修复了 outerCircle 未定义问题
+            container.on('pointerover', () => {
+                circle.scale.set(1.2);
+                if (outerCircle) {
+                    outerCircle.scale.set(1.2);
+                }
+                if (label) {
+                    label.style.fill = 0xf1c40f;
+                }
+            });
+            
+            container.on('pointerout', () => {
+                circle.scale.set(1);
+                if (outerCircle) {
+                    outerCircle.scale.set(1);
+                }
+                if (label) {
+                    label.style.fill = 0xffffff;
+                }
+            });
+            
+            // 点击显示信息
+            container.on('click', (event) => {
+                event.stopPropagation();
+                showLandmarkInfo(container, code, type);
+            });
+            
+            return container;
+        }
+        
+        function showLandmarkInfo(container, code, type) {
+            const typeNames = {
+                'loading': '装载点',
+                'unloading': '卸载点',
+                'checkpoint': '检查点',
+                'junction': '道岔',
+                'trackpoint': '轨道点'
+            };
+            
+            const infoBox = document.createElement('div');
+            infoBox.className = 'info-box';
+            infoBox.innerHTML = `
+                <h3>${code}</h3>
+                <p><strong>类型:</strong> ${typeNames[type]}</p>
+                <p><strong>位置:</strong> (${Math.round(container.x)}, ${Math.round(container.y)})</p>
+                <p><strong>状态:</strong> <span style="color: #2ecc71;">正常</span></p>
+            `;
+            
+            infoBox.style.left = `${container.x + 20}px`;
+            infoBox.style.top = `${container.y - 50}px`;
+            infoBox.style.display = 'block';
+            
+            document.querySelector('.map-container').appendChild(infoBox);
+            
+            // 5秒后自动关闭
+            setTimeout(() => {
+                infoBox.style.display = 'none';
+                document.querySelector('.map-container').removeChild(infoBox);
+            }, 5000);
+        }
+        
+        // 添加障碍物
+        function addObstacle() {
+            mapState.mode = 'addObstacle';
+            document.querySelector('.mode').textContent = '模式: 添加障碍物';
+        }
+        
+        function onObstaclePointerDown(pos) {
+            // 创建障碍物
+            const obstacle = createObstacle(pos.x, pos.y);
+            mapContainer.addChild(obstacle);
+            
+            mapState.obstacles.push({
+                x: pos.x,
+                y: pos.y,
+                graphic: obstacle
+            });
+        }
+        
+        function createObstacle(x, y) {
+            const container = new PIXI.Container();
+            container.position.set(x, y);
+            container.interactive = true;
+            container.buttonMode = true;
+            
+            const triangle = new PIXI.Graphics();
+            triangle.beginFill(0xe74c3c);
+            triangle.moveTo(0, -15);
+            triangle.lineTo(-10, 10);
+            triangle.lineTo(10, 10);
+            triangle.lineTo(0, -15);
+            triangle.endFill();
+            container.addChild(triangle);
+            
+            const circle = new PIXI.Graphics();
+            circle.lineStyle(2, 0xe74c3c, 0.5);
+            circle.drawCircle(0, 0, 20);
+            circle.endFill();
+            container.addChild(circle);
+            
+            // 添加动画效果
+            let scale = 1;
+            app.ticker.add(() => {
+                scale = 0.9 + 0.1 * Math.sin(Date.now() / 300);
+                triangle.scale.set(scale);
+            });
+            
+            // 阻止事件冒泡
+            container.on('click', (event) => {
+                event.stopPropagation();
+            });
+            
+            return container;
+        }
+        
+        // 选择模式
+        function selectMode() {
+            mapState.mode = 'select';
+            document.querySelector('.mode').textContent = '模式: 选择/移动';
+        }
+        
+        // 创建天车图形
+        function createCrane() {
+            const crane = new PIXI.Container();
+            
+            // 车体
+            const body = new PIXI.Graphics();
+            body.beginFill(0xf1c40f);
+            body.drawRoundedRect(-20, -10, 40, 20, 5);
+            body.endFill();
+            crane.addChild(body);
+            
+            // 吊钩
+            const hook = new PIXI.Graphics();
+            hook.lineStyle(2, 0xecf0f1);
+            hook.moveTo(0, 15);
+            hook.lineTo(0, 35);
+            hook.lineTo(-8, 43);
+            hook.lineTo(8, 43);
+            hook.lineTo(0, 35);
+            crane.addChild(hook);
+            
+            // 车轮
+            const wheel1 = new PIXI.Graphics();
+            wheel1.beginFill(0x34495e);
+            wheel1.drawCircle(-15, 12, 6);
+            wheel1.endFill();
+            crane.addChild(wheel1);
+            
+            const wheel2 = new PIXI.Graphics();
+            wheel2.beginFill(0x34495e);
+            wheel2.drawCircle(15, 12, 6);
+            wheel2.endFill();
+            crane.addChild(wheel2);
+            
+            // 添加动画效果
+            app.ticker.add(() => {
+                if (mapState.simulationActive) {
+                    hook.y = 15 + Math.sin(Date.now() / 200) * 5;
+                }
+            });
+            
+            return crane;
+        }
+        
+        // 模拟运行
+        function simulateRun() {
+            mapState.mode = 'simulate';
+            document.querySelector('.mode').textContent = '模式: 模拟运行';
+            document.getElementById('simulationControls').style.display = 'flex';
+            
+            if (mapState.tracks.length === 0 && mapState.currentTrack) {
+                mapState.tracks.push(mapState.currentTrack);
+            }
+            
+            // 检查是否有路径
+            if (mapState.cranePath.length < 2) {
+                alert('请先绘制轨道路径！');
+                return;
+            }
+            
+            // 创建天车
+            if (!mapState.crane) {
+                mapState.crane = createCrane();
+                mapContainer.addChild(mapState.crane);
+            }
+            
+            // 设置起始位置
+            mapState.crane.position.set(mapState.cranePath[0].x, mapState.cranePath[0].y);
+            mapState.crane.visible = true;
+            mapState.currentPathIndex = 0;
+            
+            // 开始模拟
+            startSimulation();
+        }
+        
+        // 开始模拟
+        function startSimulation() {
+            mapState.simulationActive = true;
+            mapState.simulationSpeed = parseInt(document.getElementById('simSpeed').value);
+            
+            // 确保不会添加多个移动监听器
+            app.ticker.remove(moveCrane);
+            app.ticker.add(moveCrane);
+        }
+        
+        // 移动天车
+        function moveCrane() {
+            if (!mapState.simulationActive) return;
+            if (!mapState.crane || mapState.cranePath.length < 2) return;
+            
+            const crane = mapState.crane;
+            const path = mapState.cranePath;
+            const speed = mapState.simulationSpeed * 0.05;
+            
+            // 如果到达终点，回到起点
+            if (mapState.currentPathIndex >= path.length - 1) {
+                mapState.currentPathIndex = 0;
+                crane.position.set(path[0].x, path[0].y);
+            }
+            
+            const targetIndex = mapState.currentPathIndex + 1;
+            const currentPoint = path[mapState.currentPathIndex];
+            const targetPoint = path[targetIndex];
+            
+            // 计算方向向量
+            const dx = targetPoint.x - currentPoint.x;
+            const dy = targetPoint.y - currentPoint.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // 移动天车
+            crane.x += (dx / distance) * speed;
+            crane.y += (dy / distance) * speed;
+            
+            // 更新天车方向
+            if (dx !== 0 || dy !== 0) {
+                crane.rotation = Math.atan2(dy, dx);
+            }
+            
+            // 检查是否到达目标点
+            const currentDistance = Math.sqrt(
+                Math.pow(crane.x - currentPoint.x, 2) + 
+                Math.pow(crane.y - currentPoint.y, 2)
+            );
+            
+            if (currentDistance >= distance) {
+                mapState.currentPathIndex = targetIndex;
+                
+                // 检查是否到达地标
+                checkLandmarkProximity(crane.x, crane.y);
+            }
+        }
+        
+        // 检查是否接近地标
+        function checkLandmarkProximity(x, y) {
+            for (const landmark of mapState.landmarks) {
+                const distance = Math.sqrt(
+                    Math.pow(x - landmark.x, 2) + 
+                    Math.pow(y - landmark.y, 2)
+                );
+                
+                if (distance < 30) {
+                    showLandmarkInfo(landmark.graphic, landmark.code, landmark.type);
+                    
+                    // 添加特效
+                    const effect = new PIXI.Graphics();
+                    effect.lineStyle(2, 0x2ecc71, 0.8);
+                    effect.drawCircle(landmark.x, landmark.y, 30);
+                    mapContainer.addChild(effect);
+                    
+                    setTimeout(() => {
+                        mapContainer.removeChild(effect);
+                    }, 1000);
+                    
+                    break;
+                }
+            }
+        }
+        
+        // 暂停模拟
+        function pauseSimulation() {
+            mapState.simulationActive = false;
+        }
+        
+        // 停止模拟
+        function stopSimulation() {
+            mapState.simulationActive = false;
+            app.ticker.remove(moveCrane);
+            
+            if (mapState.crane) {
+                mapState.crane.visible = false;
+            }
+            
+            document.getElementById('simulationControls').style.display = 'none';
+        }
+        
+        // 设置按钮事件
+        document.getElementById('drawTrackBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            startDrawingTrack();
+        });
+        
+        document.getElementById('drawCurveBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            startDrawingCurve();
+        });
+        
+        document.getElementById('addLandmarkBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            startAddingLandmark();
+        });
+        
+        document.getElementById('addObstacleBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            addObstacle();
+        });
+        
+        document.getElementById('selectBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            selectMode();
+        });
+        
+        document.getElementById('simulateBtn').addEventListener('click', function() {
+            setActiveButton(this);
+            simulateRun();
+        });
+        
+        // 模拟控制按钮
+        document.getElementById('startSimBtn').addEventListener('click', function() {
+            mapState.simulationActive = true;
+        });
+        
+        document.getElementById('pauseSimBtn').addEventListener('click', function() {
+            pauseSimulation();
+        });
+        
+        document.getElementById('stopSimBtn').addEventListener('click', function() {
+            stopSimulation();
+        });
+        
+        // 速度控制
+        document.getElementById('simSpeed').addEventListener('input', function() {
+            mapState.simulationSpeed = parseInt(this.value);
+        });
+        
+        // 栅格吸附控制
+        document.getElementById('gridSnapping').addEventListener('change', function() {
+            mapState.gridSnapping = this.value === 'on';
+        });
+        
+        // 轨道点间距控制
+        document.getElementById('pointSpacing').addEventListener('input', function() {
+            mapState.pointSpacing = parseInt(this.value);
+            document.getElementById('spacingValue').textContent = `${this.value}px`;
+        });
+        
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            const mapData = {
+                landmarks: mapState.landmarks.map(l => ({ 
+                    code: l.code, 
+                    type: l.type, 
+                    x: l.x, 
+                    y: l.y 
+                })),
+                obstacles: mapState.obstacles.map(o => ({ x: o.x, y: o.y })),
+                cranePath: mapState.cranePath
+            };
+            
+            // 这里实际项目中会发送到服务器
+            console.log('地图数据已保存:', mapData);
+            alert('地图配置已保存！');
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (confirm('确定要重置地图吗？所有绘制内容将被清除。')) {
+                mapContainer.removeChildren();
+                mapState.landmarks = [];
+                mapState.obstacles = [];
+                mapState.tracks = [];
+                mapState.cranePath = [];
+                mapState.currentTrack = null;
+                mapState.crane = null;
+                mapState.controlPoints = [];
+                grid = createGrid();
+                startDrawingTrack();
+                setActiveButton(document.getElementById('drawTrackBtn'));
+                document.getElementById('simulationControls').style.display = 'none';
+            }
+        });
+        
+        // 缩放控制
+        document.getElementById('zoomIn').addEventListener('click', function() {
+            mapState.scale *= 1.2;
+            mapContainer.scale.set(mapState.scale);
+        });
+        
+        document.getElementById('zoomOut').addEventListener('click', function() {
+            mapState.scale *= 0.8;
+            mapContainer.scale.set(mapState.scale);
+        });
+        
+        document.getElementById('centerMap').addEventListener('click', function() {
+            mapContainer.position.set(0, 0);
+            mapState.scale = 1;
+            mapContainer.scale.set(1);
+        });
+        
+        // 设置活动按钮
+        function setActiveButton(button) {
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+        
+        // 初始设置
+        startDrawingTrack();
+        
+        // 响应窗口大小变化
+        window.addEventListener('resize', () => {
+            app.renderer.resize(window.innerWidth * 0.75, window.innerHeight * 0.8);
+            mapContainer.removeChild(grid);
+            grid = createGrid();
+        });
+    </script>
+</body>
+</html>

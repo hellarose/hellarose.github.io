@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OHC全场地图绘制工具</title>
+    <script src="./pixi@7.2.4.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1800px;
+            margin: 0 auto;
+            gap: 15px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px 0;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #3498db;
+            text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            color: #bdc3c7;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .tool-panel {
+            width: 300px;
+            background: rgba(30, 40, 70, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 1px solid #3498db;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            color: #3498db;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3498db;
+            text-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .control-group {
+            background: rgba(25, 35, 65, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #3498db;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #2ecc71;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-title::before {
+            content: "◆";
+            color: #3498db;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 120px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #3cb0fd, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button.active {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+        
+        .canvas-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid #3498db;
+        }
+        
+        #mapCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .status-bar {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .crane-status {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .crane-info {
+            background: rgba(52, 152, 219, 0.2);
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.5);
+        }
+        
+        .crane-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px currentColor;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            padding: 30px;
+            border-radius: 15px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 0 40px rgba(52, 152, 219, 0.5);
+            border: 2px solid #3498db;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .path-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .path-option {
+            background: rgba(30, 40, 70, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .path-option:hover {
+            background: rgba(52, 152, 219, 0.3);
+            transform: translateX(5px);
+            border-color: #2ecc71;
+        }
+        
+        .path-option::before {
+            content: "➤";
+            color: #2ecc71;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+            border: 1px solid #3498db;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        
+        .color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-top: 5px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: rgba(46, 204, 113, 0.9);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(200%);
+            transition: transform 0.4s ease;
+            z-index: 200;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .crane-path {
+            stroke: rgba(231, 76, 60, 0.6);
+            stroke-width: 3;
+            stroke-dasharray: 5;
+        }
+        
+        .zoom-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 50;
+        }
+        
+        .grid-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>OHC全场地图绘制工具</h1>
+            <div class="subtitle">基于Pixi.js的轨道地图设计与天车模拟系统</div>
+        </header>
+        
+        <div class="main-content">
+            <div class="tool-panel">
+                <div class="control-group">
+                    <div class="panel-title">绘图工具</div>
+                    <div class="btn-group">
+                        <button id="drawLineBtn" class="active">绘制直线</button>
+                        <button id="drawCurveBtn">绘制曲线</button>
+                        <button id="addLabelBtn">添加地标</button>
+                        <button id="moveBtn">移动地图</button>
+                    </div>
+                    
+                    <div class="grid-control">
+                        <label>网格大小:</label>
+                        <input type="range" id="gridSizeSlider" min="20" max="100" value="40">
+                        <span id="gridSizeValue">40px</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">天车控制</div>
+                    <div class="btn-group">
+                        <button id="addCraneBtn">添加天车</button>
+                        <button id="startSimBtn">开始模拟</button>
+                        <button id="pauseSimBtn">暂停模拟</button>
+                        <button id="resetBtn">重置位置</button>
+                    </div>
+                    <div class="slider-container">
+                        <label>天车速度: <span id="speedValue">5</span> m/s</label>
+                        <input type="range" id="craneSpeed" min="1" max="10" value="5" style="width: 100%;">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">地图操作</div>
+                    <div class="btn-group">
+                        <button id="saveBtn">保存地图</button>
+                        <button id="loadBtn">加载地图</button>
+                        <button id="clearBtn">清空地图</button>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <input type="text" id="labelInput" class="text-input" placeholder="输入地标名称">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-title">地图信息</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div>节点数量</div>
+                            <div class="stat-value" id="nodeCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div>轨道段数</div>
+                            <div class="stat-value" id="trackCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div>天车数量</div>
+                            <div class="stat-value" id="craneCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div>岔路口</div>
+                            <div class="stat-value" id="junctionCount">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="color-box" style="background-color: #3498db;"></div>
+                            <span>轨道</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background-color: #2ecc71;"></div>
+                            <span>地标点</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background-color: #e74c3c;"></div>
+                            <span>天车</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background-color: #f39c12;"></div>
+                            <span>岔路口</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <div id="mapCanvas"></div>
+                <div class="zoom-indicator">缩放: <span id="zoomValue">100</span>%</div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-info">
+                <span>状态: <strong id="statusText">就绪</strong></span> | 
+                <span>模式: <strong id="modeText">绘制直线</strong></span> | 
+                <span>网格: <strong id="gridSizeDisplay">40</strong>px</span>
+            </div>
+            <div class="crane-status">
+                <div class="crane-info">
+                    <div class="crane-color" style="background-color: #e74c3c;"></div>
+                    <span>天车1: <strong id="crane1Status">待机</strong></span>
+                </div>
+                <div class="crane-info">
+                    <div class="crane-color" style="background-color: #f39c12;"></div>
+                    <span>天车2: <strong id="crane2Status">待机</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="pathModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-title">选择前进方向</div>
+            <p>天车到达岔路口，请选择前进方向:</p>
+            <div id="pathOptions" class="path-options">
+                <!-- 选项将由JS动态生成 -->
+            </div>
+            <div class="btn-group">
+                <button id="cancelPathBtn">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">操作成功!</div>
+    
+    <script>
+        // 初始化变量
+        let app, gridContainer, trackContainer, nodeContainer, craneContainer;
+        let mapData, currentMode, isDrawing, currentNode, tempGraphics, startPoint, controlPoint, lastNode;
+        let gridSize = 40;
+        let zoomLevel = 1;
+
+        // 初始化函数
+        function initApp() {
+            // 初始化Pixi应用
+            app = new PIXI.Application({
+                backgroundColor: 0x0c1e3a,
+                antialias: true,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true
+            });
+            document.getElementById('mapCanvas').appendChild(app.view);
+            
+            // 创建容器
+            gridContainer = new PIXI.Container();
+            app.stage.addChild(gridContainer);
+            
+            trackContainer = new PIXI.Container();
+            app.stage.addChild(trackContainer);
+            
+            nodeContainer = new PIXI.Container();
+            app.stage.addChild(nodeContainer);
+            
+            craneContainer = new PIXI.Container();
+            app.stage.addChild(craneContainer);
+            
+            // 初始化数据结构
+            mapData = {
+                nodes: [],      // 节点数组
+                tracks: [],     // 轨道数组
+                cranes: []      // 天车数组
+            };
+            
+            // 当前状态
+            currentMode = 'line'; // 'line', 'curve', 'label', 'move'
+            isDrawing = false;
+            currentNode = null;
+            tempGraphics = null;
+            startPoint = null;
+            controlPoint = null;
+            lastNode = null;
+            
+            // 调整Canvas大小
+            resizeCanvas();
+            
+            // 添加初始节点
+            const centerX = Math.round(app.renderer.width / 2 / gridSize) * gridSize;
+            const centerY = Math.round(app.renderer.height / 2 / gridSize) * gridSize;
+            addNode(centerX, centerY, "起点");
+            lastNode = mapData.nodes[0];
+            
+            // 添加默认天车
+            addCrane();
+            
+            // 设置事件监听器
+            setupEventListeners();
+            updateStats();
+        }
+
+        // 调整Canvas大小
+        function resizeCanvas() {
+            if (!app) return;
+            
+            const container = document.querySelector('.canvas-container');
+            app.renderer.resize(container.clientWidth, container.clientHeight);
+            drawGrid();
+        }
+        
+        // 绘制网格
+        function drawGrid() {
+            if (!gridContainer) return;
+            
+            gridContainer.removeChildren();
+            
+            const lineColor = 0x1e3a5f;
+            
+            // 计算网格线数量
+            const width = app.renderer.width;
+            const height = app.renderer.height;
+            const cols = Math.ceil(width / gridSize);
+            const rows = Math.ceil(height / gridSize);
+            
+            // 绘制垂直线
+            for (let i = 0; i <= cols; i++) {
+                const line = new PIXI.Graphics();
+                line.lineStyle(1, lineColor, 0.3);
+                line.moveTo(i * gridSize, 0);
+                line.lineTo(i * gridSize, height);
+                gridContainer.addChild(line);
+            }
+            
+            // 绘制水平线
+            for (let i = 0; i <= rows; i++) {
+                const line = new PIXI.Graphics();
+                line.lineStyle(1, lineColor, 0.3);
+                line.moveTo(0, i * gridSize);
+                line.lineTo(width, i * gridSize);
+                gridContainer.addChild(line);
+            }
+            
+            document.getElementById('gridSizeDisplay').textContent = gridSize;
+        }
+        
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 添加节点
+        function addNode(x, y, label = "") {
+            const nodeId = mapData.nodes.length + 1;
+            const node = {
+                id: nodeId,
+                x: Math.round(x / gridSize) * gridSize,
+                y: Math.round(y / gridSize) * gridSize,
+                label: label || `N${nodeId}`,
+                connections: [],
+                isJunction: false
+            };
+            
+            mapData.nodes.push(node);
+            
+            // 绘制节点
+            drawNode(node);
+            
+            return node;
+        }
+        
+        // 绘制节点
+        function drawNode(node) {
+            const nodeGraphics = new PIXI.Graphics();
+            
+            // 绘制节点圆圈
+            nodeGraphics.beginFill(node.isJunction ? 0xF39C12 : 0x2ECC71);
+            nodeGraphics.drawCircle(0, 0, 8);
+            nodeGraphics.endFill();
+            
+            nodeGraphics.x = node.x;
+            nodeGraphics.y = node.y;
+            nodeGraphics.interactive = true;
+            nodeGraphics.buttonMode = true;
+            
+            // 添加标签
+            const label = new PIXI.Text(node.label, {
+                fontSize: 14,
+                fill: 0xFFFFFF,
+                fontWeight: 'bold',
+                dropShadow: true,
+                dropShadowDistance: 1,
+                dropShadowColor: '#000000'
+            });
+            label.x = 10;
+            label.y = -25;
+            nodeGraphics.addChild(label);
+            
+            // 点击事件
+            nodeGraphics.on('click', () => {
+                if (currentMode === 'label') {
+                    const newLabel = document.getElementById('labelInput').value || node.label;
+                    node.label = newLabel;
+                    label.text = newLabel;
+                    showNotification(`地标名称更新为: ${newLabel}`);
+                }
+            });
+            
+            nodeContainer.addChild(nodeGraphics);
+            return nodeGraphics;
+        }
+        
+        // 添加轨道
+        function addTrack(startNode, endNode) {
+            // 避免重复轨道
+            const existingTrack = mapData.tracks.find(track => 
+                (track.start === startNode.id && track.end === endNode.id) ||
+                (track.start === endNode.id && track.end === startNode.id)
+            );
+            
+            if (existingTrack) return;
+            
+            const trackId = mapData.tracks.length + 1;
+            const track = {
+                id: trackId,
+                start: startNode.id,
+                end: endNode.id,
+                points: []
+            };
+            
+            mapData.tracks.push(track);
+            
+            // 更新节点连接
+            if (!startNode.connections.includes(endNode.id)) {
+                startNode.connections.push(endNode.id);
+            }
+            if (!endNode.connections.includes(startNode.id)) {
+                endNode.connections.push(startNode.id);
+            }
+            
+            // 检查是否为岔路口
+            if (startNode.connections.length > 2) {
+                startNode.isJunction = true;
+                updateNodeGraphics(startNode);
+            }
+            if (endNode.connections.length > 2) {
+                endNode.isJunction = true;
+                updateNodeGraphics(endNode);
+            }
+            
+            // 绘制轨道
+            drawTrack(track);
+            
+            return track;
+        }
+        
+        // 绘制轨道
+        function drawTrack(track) {
+            const startNode = mapData.nodes.find(n => n.id === track.start);
+            const endNode = mapData.nodes.find(n => n.id === track.end);
+            
+            if (!startNode || !endNode) return;
+            
+            const trackGraphics = new PIXI.Graphics();
+            trackGraphics.lineStyle(4, 0x3498DB);
+            
+            // 直线轨道
+            trackGraphics.moveTo(startNode.x, startNode.y);
+            trackGraphics.lineTo(endNode.x, endNode.y);
+            
+            trackContainer.addChild(trackGraphics);
+            return trackGraphics;
+        }
+        
+        // 更新节点图形
+        function updateNodeGraphics(node) {
+            // 移除旧图形
+            nodeContainer.children.forEach(child => {
+                if (Math.round(child.x) === node.x && Math.round(child.y) === node.y) {
+                    child.destroy();
+                }
+            });
+            
+            // 绘制新节点
+            drawNode(node);
+        }
+        
+        // 添加天车
+        function addCrane() {
+            if (mapData.nodes.length === 0) {
+                showNotification("请先添加节点!");
+                return;
+            }
+            
+            const craneId = mapData.cranes.length + 1;
+            const startNode = mapData.nodes[0]; // 从第一个节点开始
+            
+            const crane = {
+                id: craneId,
+                color: craneId === 1 ? 0xE74C3C : 0xF39C12,
+                currentNode: startNode.id,
+                nextNode: null,
+                path: [],
+                speed: 5, // m/s
+                position: { x: startNode.x, y: startNode.y },
+                status: 'idle',
+                progress: 0
+            };
+            
+            mapData.cranes.push(crane);
+            
+            // 绘制天车
+            drawCrane(crane);
+            
+            updateStats();
+            showNotification(`天车 ${craneId} 已添加`);
+            return crane;
+        }
+        
+        // 绘制天车
+        function drawCrane(crane) {
+            const craneGraphics = new PIXI.Graphics();
+            
+            // 天车主体的三角形
+            craneGraphics.beginFill(crane.color);
+            craneGraphics.moveTo(0, -15);
+            craneGraphics.lineTo(10, 10);
+            craneGraphics.lineTo(-10, 10);
+            craneGraphics.lineTo(0, -15);
+            craneGraphics.endFill();
+            
+            // 添加天车ID标签
+            const label = new PIXI.Text(`C${crane.id}`, {
+                fontSize: 12,
+                fill: 0xFFFFFF,
+                fontWeight: 'bold',
+                dropShadow: true,
+                dropShadowDistance: 1,
+                dropShadowColor: '#000000'
+            });
+            label.x = -8;
+            label.y = -5;
+            craneGraphics.addChild(label);
+            
+            craneGraphics.x = crane.position.x;
+            craneGraphics.y = crane.position.y;
+            
+            craneContainer.addChild(craneGraphics);
+            crane.graphics = craneGraphics;
+            
+            return craneGraphics;
+        }
+        
+        // 更新天车位置
+        function updateCrane(crane) {
+            if (!crane.graphics) return;
+            
+            crane.graphics.x = crane.position.x;
+            crane.graphics.y = crane.position.y;
+            
+            // 更新天车方向
+            if (crane.nextNode && crane.path.length >= 2) {
+                const start = crane.path[0];
+                const end = crane.path[1];
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const angle = Math.atan2(dy, dx) + Math.PI / 2;
+                crane.graphics.rotation = angle;
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('nodeCount').textContent = mapData.nodes.length;
+            document.getElementById('trackCount').textContent = mapData.tracks.length;
+            document.getElementById('craneCount').textContent = mapData.cranes.length;
+            
+            // 计算岔路口数量
+            const junctionCount = mapData.nodes.filter(node => node.connections.length > 2).length;
+            document.getElementById('junctionCount').textContent = junctionCount;
+            
+            // 更新天车状态
+            if (mapData.cranes.length > 0) {
+                document.getElementById('crane1Status').textContent = 
+                    mapData.cranes[0]?.status === 'moving' ? '运行中' : 
+                    mapData.cranes[0]?.status === 'waiting' ? '等待选择' : '待机';
+            }
+                
+            if (mapData.cranes.length > 1) {
+                document.getElementById('crane2Status').textContent = 
+                    mapData.cranes[1]?.status === 'moving' ? '运行中' : 
+                    mapData.cranes[1]?.status === 'waiting' ? '等待选择' : '待机';
+            }
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 模式按钮
+            document.getElementById('drawLineBtn').addEventListener('click', () => {
+                setMode('line');
+                document.getElementById('modeText').textContent = '绘制直线';
+            });
+            
+            document.getElementById('drawCurveBtn').addEventListener('click', () => {
+                setMode('curve');
+                document.getElementById('modeText').textContent = '绘制曲线';
+            });
+            
+            document.getElementById('addLabelBtn').addEventListener('click', () => {
+                setMode('label');
+                document.getElementById('modeText').textContent = '添加地标';
+            });
+            
+            document.getElementById('moveBtn').addEventListener('click', () => {
+                setMode('move');
+                document.getElementById('modeText').textContent = '移动地图';
+            });
+            
+            // 天车控制按钮
+            document.getElementById('addCraneBtn').addEventListener('click', () => {
+                if (mapData.cranes.length < 2) {
+                    addCrane();
+                } else {
+                    showNotification("最多只能添加2辆天车");
+                }
+            });
+            
+            document.getElementById('startSimBtn').addEventListener('click', startSimulation);
+            document.getElementById('pauseSimBtn').addEventListener('click', pauseSimulation);
+            document.getElementById('resetBtn').addEventListener('click', resetCranes);
+            
+            // 地图操作按钮
+            document.getElementById('saveBtn').addEventListener('click', saveMap);
+            document.getElementById('loadBtn').addEventListener('click', loadMap);
+            document.getElementById('clearBtn').addEventListener('click', clearMap);
+            
+            // 天车速度控制
+            document.getElementById('craneSpeed').addEventListener('input', (e) => {
+                const speed = parseInt(e.target.value);
+                document.getElementById('speedValue').textContent = speed;
+                mapData.cranes.forEach(crane => {
+                    crane.speed = speed;
+                });
+            });
+            
+            // 路径选择模态框
+            document.getElementById('cancelPathBtn').addEventListener('click', () => {
+                document.getElementById('pathModal').style.display = 'none';
+            });
+            
+            document.querySelector('.close-modal').addEventListener('click', () => {
+                document.getElementById('pathModal').style.display = 'none';
+            });
+            
+            // 窗口大小变化
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 网格大小调整
+            document.getElementById('gridSizeSlider').addEventListener('input', (e) => {
+                gridSize = parseInt(e.target.value);
+                document.getElementById('gridSizeValue').textContent = `${gridSize}px`;
+                document.getElementById('gridSizeDisplay').textContent = gridSize;
+                drawGrid();
+            });
+            
+            // 画布事件
+            app.stage.interactive = true;
+            app.stage.hitArea = app.renderer.screen;
+            
+            app.stage.on('pointerdown', onPointerDown);
+            app.stage.on('pointermove', onPointerMove);
+            app.stage.on('pointerup', onPointerUp);
+            app.stage.on('pointerupoutside', onPointerUp);
+            
+            // 缩放事件
+            app.renderer.view.addEventListener('wheel', onMouseWheel);
+        }
+        
+        // 设置当前模式
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.btn-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (mode === 'line') {
+                document.getElementById('drawLineBtn').classList.add('active');
+            } else if (mode === 'curve') {
+                document.getElementById('drawCurveBtn').classList.add('active');
+            } else if (mode === 'label') {
+                document.getElementById('addLabelBtn').classList.add('active');
+            } else if (mode === 'move') {
+                document.getElementById('moveBtn').classList.add('active');
+            }
+        }
+        
+        // 将屏幕坐标转换为世界坐标（考虑缩放和位移）
+        function screenToWorld(pos) {
+            return {
+                x: (pos.x - trackContainer.x) / trackContainer.scale.x,
+                y: (pos.y - trackContainer.y) / trackContainer.scale.y
+            };
+        }
+        
+        // 鼠标按下事件
+        function onPointerDown(event) {
+            const screenPos = event.data.global;
+            const worldPos = screenToWorld(screenPos);
+            
+            if (currentMode === 'line' || currentMode === 'curve') {
+                isDrawing = true;
+                
+                // 对齐网格
+                startPoint = { 
+                    x: Math.round(worldPos.x / gridSize) * gridSize, 
+                    y: Math.round(worldPos.y / gridSize) * gridSize 
+                };
+                
+                // 检查是否从现有节点开始
+                currentNode = findNodeAtPosition(startPoint.x, startPoint.y);
+                if (!currentNode) {
+                    currentNode = addNode(startPoint.x, startPoint.y);
+                }
+                
+                // 创建临时图形
+                tempGraphics = new PIXI.Graphics();
+                trackContainer.addChild(tempGraphics);
+                
+                // 绘制起点
+                tempGraphics.lineStyle(2, 0x3498DB, 0.7);
+                tempGraphics.drawCircle(startPoint.x, startPoint.y, 6);
+            } else if (currentMode === 'move') {
+                isDrawing = true;
+                startPoint = { x: screenPos.x, y: screenPos.y };
+            } else if (currentMode === 'label') {
+                // 添加地标
+                const node = findNodeAtPosition(worldPos.x, worldPos.y);
+                if (node) {
+                    const newLabel = document.getElementById('labelInput').value || node.label;
+                    node.label = newLabel;
+                    updateNodeGraphics(node);
+                    showNotification(`地标名称更新为: ${newLabel}`);
+                }
+            }
+        }
+        
+        // 鼠标移动事件
+        function onPointerMove(event) {
+            const screenPos = event.data.global;
+            const worldPos = screenToWorld(screenPos);
+            
+            if (!isDrawing) return;
+            
+            if (currentMode === 'line' && tempGraphics) {
+                tempGraphics.clear();
+                tempGraphics.lineStyle(2, 0x3498DB, 0.7);
+                tempGraphics.drawCircle(startPoint.x, startPoint.y, 6);
+                tempGraphics.moveTo(startPoint.x, startPoint.y);
+                
+                // 对齐网格
+                const alignedEnd = {
+                    x: Math.round(worldPos.x / gridSize) * gridSize,
+                    y: Math.round(worldPos.y / gridSize) * gridSize
+                };
+                tempGraphics.lineTo(alignedEnd.x, alignedEnd.y);
+            } else if (currentMode === 'curve' && tempGraphics) {
+                tempGraphics.clear();
+                tempGraphics.lineStyle(2, 0x3498DB, 0.7);
+                tempGraphics.drawCircle(startPoint.x, startPoint.y, 6);
+                
+                if (!controlPoint) {
+                    controlPoint = {
+                        x: (startPoint.x + worldPos.x) / 2,
+                        y: (startPoint.y + worldPos.y) / 2
+                    };
+                }
+                
+                // 对齐网格
+                const alignedEnd = {
+                    x: Math.round(worldPos.x / gridSize) * gridSize,
+                    y: Math.round(worldPos.y / gridSize) * gridSize
+                };
+                
+                tempGraphics.moveTo(startPoint.x, startPoint.y);
+                tempGraphics.quadraticCurveTo(controlPoint.x, controlPoint.y, alignedEnd.x, alignedEnd.y);
+            } else if (currentMode === 'move') {
+                const dx = screenPos.x - startPoint.x;
+                const dy = screenPos.y - startPoint.y;
+                
+                trackContainer.x += dx;
+                trackContainer.y += dy;
+                nodeContainer.x += dx;
+                nodeContainer.y += dy;
+                craneContainer.x += dx;
+                craneContainer.y += dy;
+                
+                startPoint = { x: screenPos.x, y: screenPos.y };
+            }
+        }
+        
+        // 鼠标释放事件
+        function onPointerUp(event) {
+            if (!isDrawing) return;
+            
+            const screenPos = event.data.global;
+            const worldPos = screenToWorld(screenPos);
+            
+            if (currentMode === 'line' && tempGraphics) {
+                tempGraphics.destroy();
+                tempGraphics = null;
+                
+                // 对齐网格
+                const endPoint = { 
+                    x: Math.round(worldPos.x / gridSize) * gridSize, 
+                    y: Math.round(worldPos.y / gridSize) * gridSize 
+                };
+                let endNode = findNodeAtPosition(endPoint.x, endPoint.y);
+                
+                if (!endNode) {
+                    endNode = addNode(endPoint.x, endPoint.y);
+                }
+                
+                // 避免重复添加轨道
+                if (!currentNode.connections.includes(endNode.id)) {
+                    addTrack(currentNode, endNode);
+                    lastNode = endNode;
+                    showNotification(`添加轨道: ${currentNode.label} → ${endNode.label}`);
+                }
+            } else if (currentMode === 'curve' && tempGraphics) {
+                tempGraphics.destroy();
+                tempGraphics = null;
+                controlPoint = null;
+                
+                // 对齐网格
+                const endPoint = { 
+                    x: Math.round(worldPos.x / gridSize) * gridSize, 
+                    y: Math.round(worldPos.y / gridSize) * gridSize 
+                };
+                let endNode = findNodeAtPosition(endPoint.x, endPoint.y);
+                
+                if (!endNode) {
+                    endNode = addNode(endPoint.x, endPoint.y);
+                }
+                
+                // 添加轨道
+                if (!currentNode.connections.includes(endNode.id)) {
+                    addTrack(currentNode, endNode);
+                    lastNode = endNode;
+                    showNotification(`添加曲线轨道: ${currentNode.label} → ${endNode.label}`);
+                }
+            }
+            
+            isDrawing = false;
+            updateStats();
+        }
+        
+        // 鼠标滚轮缩放 - 以鼠标位置为基点
+        function onMouseWheel(event) {
+            event.preventDefault();
+            
+            const delta = event.deltaY > 0 ? 0.9 : 1.1;
+            const oldScale = trackContainer.scale.x;
+            const newScale = oldScale * delta;
+            
+            // 限制缩放范围
+            if (newScale > 0.3 && newScale < 3) {
+                // 获取鼠标在画布中的位置
+                const rect = app.renderer.view.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                
+                // 计算鼠标位置在缩放前的世界坐标
+                const worldPosBefore = {
+                    x: (mouseX - trackContainer.x) / oldScale,
+                    y: (mouseY - trackContainer.y) / oldScale
+                };
+                
+                // 应用新缩放比例
+                trackContainer.scale.set(newScale);
+                nodeContainer.scale.set(newScale);
+                craneContainer.scale.set(newScale);
+                
+                // 计算缩放后鼠标位置应该保持不变的世界坐标
+                const worldPosAfter = {
+                    x: (mouseX - trackContainer.x) / newScale,
+                    y: (mouseY - trackContainer.y) / newScale
+                };
+                
+                // 调整容器位置以保持鼠标位置不变
+                trackContainer.x += (worldPosAfter.x - worldPosBefore.x) * newScale;
+                trackContainer.y += (worldPosAfter.y - worldPosBefore.y) * newScale;
+                
+                // 同步其他容器位置
+                nodeContainer.x = trackContainer.x;
+                nodeContainer.y = trackContainer.y;
+                craneContainer.x = trackContainer.x;
+                craneContainer.y = trackContainer.y;
+                
+                // 更新缩放显示
+                zoomLevel = newScale * 100;
+                document.getElementById('zoomValue').textContent = Math.round(zoomLevel);
+            }
+        }
+        
+        // 查找位置上的节点
+        function findNodeAtPosition(x, y) {
+            return mapData.nodes.find(node => {
+                return Math.abs(node.x - x) < 20 && Math.abs(node.y - y) < 20;
+            });
+        }
+        
+        // 开始模拟
+        function startSimulation() {
+            if (mapData.tracks.length === 0) {
+                showNotification("请先绘制轨道!");
+                return;
+            }
+            
+            document.getElementById('statusText').textContent = '模拟运行中';
+            
+            // 为每个天车设置路径
+            mapData.cranes.forEach(crane => {
+                if (crane.status !== 'moving' && crane.status !== 'waiting') {
+                    crane.status = 'moving';
+                    
+                    // 随机选择下一个节点
+                    const currentNode = mapData.nodes.find(n => n.id === crane.currentNode);
+                    if (currentNode && currentNode.connections.length > 0) {
+                        const nextNodeId = currentNode.connections[0];
+                        crane.nextNode = mapData.nodes.find(n => n.id === nextNodeId);
+                        crane.path = [currentNode, crane.nextNode];
+                    }
+                }
+            });
+            
+            updateStats();
+            
+            // 开始动画循环
+            app.ticker.add(updateSimulation);
+        }
+        
+        // 暂停模拟
+        function pauseSimulation() {
+            mapData.cranes.forEach(crane => {
+                if (crane.status === 'moving') {
+                    crane.status = 'idle';
+                }
+            });
+            
+            document.getElementById('statusText').textContent = '模拟已暂停';
+            updateStats();
+            
+            // 停止动画循环
+            app.ticker.remove(updateSimulation);
+        }
+        
+        // 重置天车位置
+        function resetCranes() {
+            mapData.cranes.forEach(crane => {
+                const startNode = mapData.nodes[0];
+                if (startNode) {
+                    crane.currentNode = startNode.id;
+                    crane.position.x = startNode.x;
+                    crane.position.y = startNode.y;
+                    crane.status = 'idle';
+                    crane.path = [];
+                    crane.progress = 0;
+                    updateCrane(crane);
+                }
+            });
+            
+            document.getElementById('statusText').textContent = '天车已重置';
+            updateStats();
+            showNotification("天车已重置到起始位置");
+        }
+        
+        // 更新模拟
+        function updateSimulation(delta) {
+            mapData.cranes.forEach(crane => {
+                if (crane.status !== 'moving' || !crane.path || crane.path.length < 2) return;
+                
+                const start = crane.path[0];
+                const end = crane.path[1];
+                
+                // 计算距离和方向
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 计算移动速度（像素/帧）
+                const speedPerFrame = (crane.speed * delta) / 2;
+                
+                // 计算当前位置比例
+                crane.progress = crane.progress || 0;
+                crane.progress += speedPerFrame / distance;
+                
+                if (crane.progress >= 1) {
+                    // 到达节点
+                    crane.position.x = end.x;
+                    crane.position.y = end.y;
+                    crane.currentNode = end.id;
+                    crane.progress = 0;
+                    
+                    // 检查是否是岔路口
+                    if (end.connections.length > 2) {
+                        crane.status = 'waiting';
+                        showPathSelection(crane, end);
+                    } else {
+                        // 继续前往下一个节点
+                        crane.path.shift();
+                        
+                        if (crane.path.length < 2) {
+                            // 到达终点，随机选择下一个节点
+                            const nextConnections = end.connections.filter(id => id !== start.id);
+                            if (nextConnections.length > 0) {
+                                const nextNodeId = nextConnections[Math.floor(Math.random() * nextConnections.length)];
+                                const nextNode = mapData.nodes.find(n => n.id === nextNodeId);
+                                crane.path.push(nextNode);
+                            } else {
+                                crane.status = 'idle';
+                            }
+                        }
+                    }
+                } else {
+                    // 更新位置
+                    crane.position.x = start.x + dx * crane.progress;
+                    crane.position.y = start.y + dy * crane.progress;
+                }
+                
+                updateCrane(crane);
+            });
+        }
+        
+        // 显示路径选择
+        function showPathSelection(crane, junction) {
+            document.getElementById('statusText').textContent = `天车${crane.id}到达岔路口 ${junction.label}`;
+            
+            // 清空选项
+            const optionsContainer = document.getElementById('pathOptions');
+            optionsContainer.innerHTML = '';
+            
+            // 添加选项（排除来时的路）
+            const previousNode = crane.path[0];
+            const possiblePaths = junction.connections.filter(id => id !== previousNode.id);
+            
+            possiblePaths.forEach(nodeId => {
+                const node = mapData.nodes.find(n => n.id === nodeId);
+                const option = document.createElement('div');
+                option.className = 'path-option';
+                option.textContent = `前往 ${node.label}`;
+                option.dataset.nodeId = nodeId;
+                
+                option.addEventListener('click', () => {
+                    const selectedNode = mapData.nodes.find(n => n.id === parseInt(option.dataset.nodeId));
+                    crane.path = [junction, selectedNode];
+                    crane.progress = 0;
+                    crane.status = 'moving';
+                    document.getElementById('pathModal').style.display = 'none';
+                    showNotification(`天车${crane.id}选择前往 ${selectedNode.label}`);
+                });
+                
+                optionsContainer.appendChild(option);
+            });
+            
+            document.getElementById('pathModal').style.display = 'flex';
+        }
+        
+        // 保存地图
+        function saveMap() {
+            if (mapData.nodes.length === 0) {
+                showNotification("地图为空，无法保存!");
+                return;
+            }
+            
+            const dataStr = JSON.stringify(mapData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `ohc_map_${new Date().toISOString().slice(0, 10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            document.getElementById('statusText').textContent = '地图已保存';
+            showNotification("地图已成功保存!");
+        }
+        
+        // 加载地图
+        function loadMap() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = event => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        // 清除当前地图
+                        clearMap();
+                        
+                        // 加载新数据
+                        mapData.nodes = data.nodes || [];
+                        mapData.tracks = data.tracks || [];
+                        mapData.cranes = data.cranes || [];
+                        
+                        // 重新绘制所有元素
+                        mapData.nodes.forEach(node => drawNode(node));
+                        mapData.tracks.forEach(track => drawTrack(track));
+                        mapData.cranes.forEach(crane => drawCrane(crane));
+                        
+                        document.getElementById('statusText').textContent = '地图已加载';
+                        updateStats();
+                        showNotification("地图已成功加载!");
+                    } catch (error) {
+                        document.getElementById('statusText').textContent = '加载地图失败: ' + error.message;
+                        showNotification("地图加载失败!");
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        // 清除地图
+        function clearMap() {
+            mapData.nodes = [];
+            mapData.tracks = [];
+            mapData.cranes = [];
+            
+            trackContainer.removeChildren();
+            nodeContainer.removeChildren();
+            craneContainer.removeChildren();
+            
+            // 重置缩放
+            trackContainer.scale.set(1);
+            nodeContainer.scale.set(1);
+            craneContainer.scale.set(1);
+            trackContainer.position.set(0);
+            nodeContainer.position.set(0);
+            craneContainer.position.set(0);
+            zoomLevel = 100;
+            document.getElementById('zoomValue').textContent = zoomLevel;
+            
+            // 添加初始节点
+            const centerX = Math.round(app.renderer.width / 2 / gridSize) * gridSize;
+            const centerY = Math.round(app.renderer.height / 2 / gridSize) * gridSize;
+            addNode(centerX, centerY, "起点");
+            lastNode = mapData.nodes[0];
+            
+            // 添加默认天车
+            addCrane();
+            
+            document.getElementById('statusText').textContent = '地图已清除';
+            showNotification("地图已清空");
+            updateStats();
+        }
+        
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
