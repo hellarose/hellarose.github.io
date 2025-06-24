@@ -10,7 +10,7 @@
   存档风干与存档充水
   部分掉落导致卡死问题
   初加载缓慢问题 
-
+  游戏时间累积问题
  -->
 <head>
   <meta charset="UTF-8">
@@ -282,114 +282,8 @@
       player: JSON.parse(JSON.stringify(rpgGameBasePlayerData)),
       currentEvent: JSON.parse(JSON.stringify(rpgGameVeryStartEvent)),
       combat: JSON.parse(JSON.stringify(rpgGameBaseCombatData)),
-      locations: [
-        { name: "陷落的村庄", description: "被摧毁的故乡", enemies: ["路边一条", "路边一筒", "路边一万", '路边一条龙'],
-
-          explore: [
-            {
-              type:'skill',
-              rate:20,
-              name:'水弹Lv5',
-              require:{
-                level:5,
-              },
-            }
-          ].filter(Boolean)
-        },
-        { name: "受侵蚀的山林", description: "危险的森林", enemies: ["哥布木", "哥布林", "哥布森"] },
-        {
-          name: "残破的教堂", description: "暂时的避难所", enemies: ["哥石木", "哥石林"], 
-          explore: [
-            {
-              type: 'item',
-              rate: 80,
-              require: {
-                level: 10,
-                defeatList:['哥布森'],
-              },
-              name: '泣玉',
-            },
-            {
-              type:'skill',
-              rate:20,
-              name:'水弹Lv10',
-              require:{
-                level:20,
-              },
-            }
-          ].filter(Boolean)
-        },
-        { name: "山中湖", description: "宁静的湖泊", enemies: ["哥石森", "弟剪木"],
-          explore:[
-            ...Array.from({ length: 10 }).map((m, i) => {
-              let lvNum = i + 1;
-              return {
-                type:'item',
-                id: `cur-gold-attack-lv${lvNum}`,
-                name: `财富攻击Lv${lvNum}`,
-                rate: 20 / lvNum,
-                quantity: 1,
-                require:{
-                  level: lvNum * 2,
-                  defeatList: ['哥石森'],
-                }
-              }
-            }),
-          ].filter(Boolean)
-        },
-        { name: "国都", description: "王国的中心", enemies: ["弟剪林", "弟剪森", '弟剪吹'] ,
-          explore:[
-            ...Array.from({ length: 5 }).map((m, i) => {
-              let lvNum = i + 1;
-              return {
-                type:'skill',
-                name: `水枪Lv${lvNum}`,
-                rate: 30 / lvNum,
-                require:{
-                  level: 30 + i * 2,
-                }
-              }
-            }),
-          ].filter(Boolean)
-        },
-        { name: "失修地道", description: "黑暗的地下通道", enemies: ["路边一条龙", "路边大四喜", 'undefined'],
-          explore:[
-            ...Array.from({ length: 3 }).map((m, i) => {
-              let lvNum = i + 1;
-              return {
-                type:'skill',
-                name: `水龙弹Lv${lvNum}`,
-                rate: 50 / lvNum,
-                require:{
-                  level: 50 + i ** 2,
-                }
-              }
-            }),
-          ].filter(Boolean)
-        }
-      ],
-      uselessExploreResults: [
-        { name: '你发呆了一会儿！', rate: 20, },
-        { name: '你看到一个巨大的背影，躲了一阵子！', rate: 20, },
-        { name: '看到熟悉的风景，感怀了一阵子！', rate: 20, },
-        { name: '找到一个安全的地方，好好地睡了一会儿！', rate: 20, effect: { hp: 100 } },
-        { name: '找到一个简陋的地方，睡觉但被蚊虫叮了！', rate: 20, effect: { hp: [50,-1], } },
-        { name: '被什么东西追了一路，你终于安全了！', rate: 20, },
-        { name: '追了猎物很久，但没捉到！', rate: 20, },
-        { name: '路遇小河，你取了水！', rate: 20, },
-        { name: '掉进井里，废了好长时间爬出来！', rate: 20, }
-      ],
-      lvupRewardSkills: [
-        // "水弹",
-        // "风弹",
-        "火弹",
-        "电弹",
-        "强力击",
-        "治疗术",
-        // "钱袋猛击",
-        '大治疗术',
-        // '物品盲盒',
-      ].filter(Boolean),
+      locations: JSON.parse(JSON.stringify(rpgGameLocationData)),
+      uselessExploreResults: JSON.parse(JSON.stringify(rpgGameOtherExploreResultData)),
 
       allEnemies:JSON.parse(JSON.stringify(rpgGameEnemyData)),
       allItems:JSON.parse(JSON.stringify(rpgGameItemData)),
@@ -482,6 +376,8 @@
         gameData.allStatus = JSON.parse(JSON.stringify(rpgGameStatusData))
         gameData.allEvents = JSON.parse(JSON.stringify(rpgGameEventData))
         gameData.allActions = JSON.parse(JSON.stringify(rpgGameActionData))
+        gameData.uselessExploreResults = JSON.parse(JSON.stringify(rpgGameOtherExploreResultData))
+        gameData.locations = JSON.parse(JSON.stringify(rpgGameLocationData))
       }catch(e){
         console.error('读取游戏数据失败',e)
       }
@@ -524,7 +420,6 @@
         locationEl.textContent = location.name;
         // 地图点击跳转
         locationEl.addEventListener('click', () => {
-          gameData.gameTime++
           if (gameData.currentLocation !== location.name) {
             moveToLocation(location.name);
           }
@@ -543,27 +438,39 @@
       if (Math.random() < 0.3) {
         startCombat();
       } else {
-        gameData.currentEvent = {
-          title: "抵达新地点",
-          description: `你成功抵达了${locationName}，暂时没有发现敌人。`,
-          actions: [
-            { text: "探索区域", type: "explore" },
-            { text: "休息恢复", type: "rest" },
-            gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-            gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-          ].filter(Boolean)
-        };
+        let theEvent = pickEvent('抵达新地点')
+        theEvent.description = theEvent.description.replace('{location}',locationName)
+        gameData.currentEvent = theEvent;
       }
 
       renderMap();
       updateUI();
     }
 
+    function pickEvent(eventName=''){
+      let tool = JSON.parse(JSON.stringify(gameData.allEvents.find(m=>m.name===eventName)))
+      if(tool.actions && tool.actions.length){
+        let actionTool = JSON.parse(JSON.stringify(gameData.allActions))
+        tool.actions = tool.actions.map(m=>{
+          if(typeof m==='string'){
+            let theOne = actionTool.find(n=>n.name===m)
+            return theOne
+          }
+          return m;
+        }).filter(m=>{
+          if(!m || (m.require && !checkRequire(m.require))){
+            return false
+          }
+          return true;
+        });
+      }
+      return tool;
+    }
     // 更新UI
     function updateUI() {
       // 更新事件面板
       elements.eventTitle.textContent = gameData.currentEvent.title;
-      elements.eventDescription.textContent = `${gameData.gameTime}：${gameData.currentEvent.description}`;
+      elements.eventDescription.textContent = `${gameData.gameTime++}：${gameData.currentEvent.description}`;
 
       // 清除现有按钮
       elements.actionsContainer.innerHTML = '';
@@ -579,17 +486,17 @@
       });
 
       // 更新状态面板
-      elements.hpValue.textContent = gameData.player.hp;
-      elements.attackValue.textContent = gameData.player.attack;
-      elements.defendValue.textContent = gameData.player.defend;
+      elements.hpValue.textContent = gameData.player.hp>1e8?gameData.player.hp.toExponential(4):gameData.player.hp;
+      elements.attackValue.textContent = gameData.player.attack>1e8?gameData.player.attack.toExponential(4):gameData.player.attack;
+      elements.defendValue.textContent = gameData.player.defend>1e8?gameData.player.defend.toExponential(4):gameData.player.defend;
       elements.goldValue.textContent = gameData.player.gold>1e8?gameData.player.gold.toExponential(4):gameData.player.gold;
-      elements.expValue.textContent = gameData.player.exp;
+      elements.expValue.textContent = gameData.player.exp>1e8?gameData.player.exp.toExponential(4):gameData.player.exp;
       elements.levelValue.textContent = gameData.player.level;
 
       // 更新经验条
       const expPercent = (gameData.player.exp / gameData.player.nextLevelExp) * 100;
       elements.expProgress.style.width = `${expPercent}%`;
-      elements.expText.textContent = `${gameData.player.exp}/${gameData.player.nextLevelExp}`;
+      elements.expText.textContent = `${gameData.player.exp>1e8?gameData.player.exp.toExponential(4):gameData.player.exp}/${gameData.player.nextLevelExp>1e8?gameData.player.nextLevelExp.toExponential(4):gameData.player.nextLevelExp}`;
 
       // 更新装备
       elements.equipmentContainer.innerHTML = '';
@@ -665,9 +572,9 @@
       document.getElementById('combat-item').addEventListener('click', openItemModal);
 
       // 模态框关闭按钮
-      elements.closeItemModal.addEventListener('click', () => (gameData.gameTime++,elements.itemModal.style.display = 'none'));
-      elements.closeSkillModal.addEventListener('click', () => (gameData.gameTime++,elements.skillModal.style.display = 'none'));
-      elements.closeStatModal.addEventListener('click', () => (gameData.gameTime++,elements.statModal.style.display = 'none'));
+      elements.closeItemModal.addEventListener('click', () => elements.itemModal.style.display = 'none');
+      elements.closeSkillModal.addEventListener('click', () => elements.skillModal.style.display = 'none');
+      elements.closeStatModal.addEventListener('click', () => elements.statModal.style.display = 'none');
 
       // 升级奖励选择
       // elements.levelupHp.addEventListener('click', () => selectLevelUpReward('hp'));
@@ -696,6 +603,32 @@
     function checkRequire(require = {}) {
       let result = {
         done: true,
+      }
+      if(typeof require.isHpFullHp === 'boolean'){
+        result.done = result.done && (require.isHpFullHp ? gameData.player.hp === gameData.player.maxHp : gameData.player.hp !== gameData.player.maxHp);
+        if(!result.done){
+          return result;
+        }
+      }
+      if(typeof require.isLastLocation === 'boolean'){
+        let index = gameData.locations.findIndex(m=>m.name===gameData.currentLocation)
+        result.done = result.done && (require.isLastLocation ? index === gameData.locations.length - 1 : index !== gameData.locations.length - 1);
+        if(!result.done){
+          return result;
+        }
+      }
+      if(typeof require.isFirstLocation === 'boolean'){
+        let index = gameData.locations.findIndex(m=>m.name===gameData.currentLocation)
+        result.done = result.done && (require.isFirstLocation ? index === 0 : index!==0);
+        if(!result.done){
+          return result;
+        }
+      }
+      if(typeof require.hasSomeItem === 'boolean'){
+        result.done = result.done && (require.hasSomeItem ? gameData.player.inventory.length : !gameData.player.inventory.length)
+        if(!result.done){
+          return result;
+        }
       }
       if (require.level) {
         if (gameData.player.level < require.level) {
@@ -774,12 +707,12 @@
     }
     // 处理玩家动作
     function handleAction(action) {
-      gameData.gameTime++
       switch (action.type) {
         case 'goForward': {
           const currentIndex = gameData.locations.findIndex(l => l.name === gameData.currentLocation);
           if (currentIndex > 0) {
             moveToLocation(gameData.locations[currentIndex - 1].name);
+            return
           }
           break;
         }
@@ -798,22 +731,8 @@
           if (itemUseableOutFight.length > 0) {
             openItemModalForUseable(itemUseableOutFight, true)
           } else {
-            gameData.currentEvent = {
-              title: "没有可用道具",
-              description: `你目前没有非战道具！`,
-              actions: [
-                { text: "搜索更多", type: "explore" },
-                // 如果生命值不满 且 拥有回复药
-                gameData.player.health < gameData.player.maxHealth
-                  ? { text: "休息回复", type: "rest" }
-                  : null,
-                { text: "继续前进", type: "escape" },
-                gameData.currentPlaceIndex > 0
-                  ? { text: "返回", type: "goForward" }
-                  : null,
-                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-              ].filter(Boolean)
-            };
+            let theEvent = pickEvent('无可用道具')
+            gameData.currentEvent = theEvent;
           }
           break;
         }
@@ -831,11 +750,9 @@
           gameData.combat.log = [{ type: "info", text: `遭遇了${gameData.combat.enemy.name}！战斗开始！` }];
 
           // 更新战斗事件
-          gameData.currentEvent = {
-            title: "遭遇敌人",
-            description: `你遭遇了路边王！准备战斗！`,
-            actions: []
-          };
+          let theEvent = pickEvent('遭遇路边王')
+         
+          gameData.currentEvent = theEvent;
           setTimeout(()=>{
             startPlayerRound()
           },1000)
@@ -853,52 +770,29 @@
             skill:['木弹']
           }
           if(checkRequire(dheRequire)){
-            gameData.currentEvent = {
-              title: '结局：更好的未来',
-              description: `你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染，一直没有作用的技能木弹发挥了作用，将剩余所有污染吸收带劲，最后消失在了世间。勇者成功拯救了世界，污染被彻底清除！`,
-              actions: [
-                { text: '查看统计', type: 'viewStat' },
-                { text: '下一局游戏', type: 'regame' }
-              ]
-            }
+            let theEvent = pickEvent('更好的未来')
+         
+            gameData.currentEvent = theEvent;
             updateUI();
             return
           }else if(checkRequire(heRequire)){
-            gameData.currentEvent = {
-              title: '结局：一切将迎来好的结局',
-              description: `你扑上前去，尽力阻止了污染的神明残屑向外面扩散，泣玉发出神奇的光，净化了大部分污染。勇者成功拯救了世界！`,
-              actions: [
-                { text: '查看统计', type: 'viewStat' },
-                { text: '下一局游戏', type: 'regame' }
-              ]
-            }
+            let theEvent = pickEvent('好的结局')
+            gameData.currentEvent = theEvent;
             updateUI();
             return
           }else{
             // 坏结局
-            gameData.currentEvent = {
-              title: '结局：污染的世界',
-              description: `你扑上前去，但无法阻止污染的神明残屑向外面扩散，泣玉发出光芒但无济于事，仿佛有什么存在发出一声叹息。一切都被污染了！`,
-              actions: [
-                { text: '查看统计', type: 'viewStat' },
-                { text: '下一局游戏', type: 'regame' }
-              ]
-            }
+            let theEvent = pickEvent('污染的世界')
+            gameData.currentEvent = theEvent;
             updateUI();
             return
           }
           break;
         }
         case 'end:lose':{
+          let theEvent = pickEvent('战败结局')
           // 失败结局
-          gameData.currentEvent = {
-            title: "Game Over",
-            description: `你距离真相还很远，下辈子注意点！`,
-            actions: [
-              { text: "查看统计", type: "viewStat" },
-              { text: "下辈子", type: "regame" },
-            ].filter(Boolean)
-          }
+          gameData.currentEvent = theEvent;
           updateUI();
           return
           break;
@@ -923,22 +817,19 @@
           gameData.currentLocation = '陷落的村庄'
           gameData.currentPlaceIndex = 0
           gameData.combat = JSON.parse(JSON.stringify(rpgGameBaseCombatData))
-          gameData.currentEvent = JSON.parse(JSON.stringify(rpgGameVeryStartEvent))
+          let theEvent = pickEvent('最初的剧情事件')
+          gameData.currentEvent = theEvent
           gameData.gameTime = 0;
           gameData.createTimeTemp = Date.now()
           initData();
           updateUI();
           return;
         }
-        case 'explore':
+        case 'explore':{
           if (checkFinal()) {
-            gameData.currentEvent = {
-              title: '最终之战',
-              description: `路边王注意到了你，于是来到你面前，它不打算放任你了。你经历了很多，这一刻终于来临。`,
-              actions: [
-                { text: '开始战斗', type: 'startBattle' }
-              ]
-            }
+            let theEvent = pickEvent('最终之战')
+            
+            gameData.currentEvent = theEvent;
             updateUI();
             return
           }
@@ -965,22 +856,9 @@
               if (foundItem.id === "gold") {
                 const goldAmount = Math.floor(Math.random() * 10) + 5;
                 gameData.player.gold += goldAmount;
-                gameData.currentEvent = {
-                  title: "发现宝藏",
-                  description: `你在探索时发现了${goldAmount}枚金币！`,
-                  actions: [
-                    { text: "搜索更多", type: "explore" },
-                    // 如果生命值不满 且 拥有回复药
-                    gameData.player.health < gameData.player.maxHealth
-                      ? { text: "休息回复", type: "rest" }
-                      : null,
-                    { text: "继续前进", type: "escape" },
-                    gameData.currentPlaceIndex > 0
-                      ? { text: "返回", type: "goForward" }
-                      : null,
-                    gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-                  ].filter(Boolean)
-                };
+                let theEvent = pickEvent('发现宝藏')
+                theEvent.description = theEvent.description.replace('{gold}',goldAmount)
+                gameData.currentEvent = theEvent;
               } else {
                 if(foundItem.type==='skill'){
                   let theSkill = JSON.parse(JSON.stringify(rpgGameSkillData.find(m => m.name === foundItem.name) || null));
@@ -1006,20 +884,9 @@
                     gameData.player.skills[index] = JSON.parse(JSON.stringify(theSkill))
                   }
 
-                  gameData.currentEvent = {
-                    title: "发现技能",
-                    description: `你在探索时发现了技能${theSkill.name}！已自动比较和处理。`,
-                    actions: [
-                      { text: "搜索更多", type: "explore" },
-                      // 如果生命值不满 且 拥有回复药
-                      gameData.player.health < gameData.player.maxHealth
-                        ? { text: "休息回复", type: "rest" }
-                        : null,
-                      { text: "继续前进", type: "escape" },
-                      gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-                      gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-                    ].filter(Boolean)
-                  };
+                  let theEvent = pickEvent('发现技能')
+                  theEvent.description = theEvent.description.replace('{skill}',theSkill.name)
+                  gameData.currentEvent = theEvent;
                 }else{
                   let theItem = JSON.parse(JSON.stringify(rpgGameItemData.find(m => m.name === foundItem.name) || null));
                   theItem.quantity = theItem.quantity || 1;
@@ -1033,17 +900,9 @@
                       quantity: 1
                     });
                   }
-
-                  gameData.currentEvent = {
-                    title: "发现物品",
-                    description: `你在探索时发现了一个${theItem.name}！`,
-                    actions: [
-                      { text: "搜索更多", type: "explore" },
-                      { text: "继续前进", type: "escape" },
-                      gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-                      gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-                    ].filter(Boolean)
-                  };
+                  let theEvent = pickEvent('发现物品')
+                  theEvent.description = theEvent.description.replace('{item}',theItem.name)
+                  gameData.currentEvent = theEvent;
                 }
               }
             } else {
@@ -1123,49 +982,56 @@
                   }
                 }
               }
-              gameData.currentEvent = {
-                title: title,
-                description: description,
-                actions: [
-                  { text: "搜索更多", type: "explore" },
-                  // 如果生命值不满 且 拥有回复药
-                  gameData.player.health < gameData.player.maxHealth
-                    ? { text: "休息回复", type: "rest" }
-                    : null,
-                  { text: "继续前进", type: "escape" },
-                  gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-                  gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-                ].filter(Boolean)
-              };
+              let theEvent = pickEvent('发现物品')
+              theEvent.title = title;
+              theEvent.description = description
+              gameData.currentEvent = theEvent;
             }
           }
           break;
+        }
 
-        case 'rest':
+        case 'rest':{
+          const thePlayer = gameData.player;
           // 休息恢复生命值
-          const healAmount = Math.floor(gameData.player.maxHp * 0.4);
-          gameData.player.hp = Math.min(gameData.player.maxHp, gameData.player.hp + healAmount);
-
+          const healAmount = Math.floor(thePlayer.maxHp * 0.4);
+          thePlayer.hp = Math.min(thePlayer.maxHp, thePlayer.hp + healAmount);
+          let maxNeedHealing = thePlayer.maxHp - gameData.hp;
+          if(maxNeedHealing<=0){
+            gameData.currentEvent.description+=`你的生命值是满的，不需要休息！`
+            break
+          }
+          let playerWealth = thePlayer.gold;
+          let healCost;
+          let healValue = maxNeedHealing
+          if(playerWealth>=maxNeedHealing*10){
+            healCost = maxNeedHealing*10
+          }else if(playerWealth>=10){
+            healValue = Math.floor(playerWealth / 10)
+            healCost = healValue * 10;
+          }else{
+            gameData.currentEvent.description+=`你的金币不足10，无法支付恢复费用！`
+            break;
+          }
+          thePlayer.hp = Math.min(thePlayer.maxHp, thePlayer.hp + healValue);
+          thePlayer.gold -=healCost;
           // 有几率遭遇敌人
           const encounterChance = Math.random();
 
-          gameData.currentEvent = {
-            title: "休息恢复",
-            description: `你休息了一会儿，恢复了${healAmount}点生命值。${encounterChance < 0.3 ? "但休息时被敌人发现了！" : ""}`,
-            actions: [
-              { text: "搜索更多", type: "explore" },
-              { text: "再次休息", type: "rest" },
-              { text: "继续前进", type: "escape" },
-              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-            ].filter(Boolean)
-          };
+          let theEvent = pickEvent('休息恢复')
+          theEvent.description = theEvent.description
+            .replace('{gold}',healCost)
+            .replace('{hp}',healValue)
+            .replace('{encounter}',encounterChance < 0.3 ? "但休息时被敌人发现了！" : "");
+          gameData.currentEvent = theEvent;
 
           // 遭遇敌人
           if (encounterChance < 0.3) {
             setTimeout(startCombat, 1500);
+            return
           }
           break;
+        }
       }
 
       updateUI();
@@ -1176,6 +1042,14 @@
         text:`你的回合开始！`,
       })
       let thePlayer = gameData.player
+      // 回合级技能冷却
+      thePlayer.skills.forEach(skl=>{
+        if(skl.restCold && skl.coldType === 'round'){
+          skl.restColdNum--
+          skl.restCold = `${skl.restColdNum}个回合`;
+        }
+      })
+
       if(thePlayer.onRoundStart){ // 这个配置优先于状态执行
         if(!runUnitHook(thePlayer.onRoundStart,thePlayer).next){
           return
@@ -1187,7 +1061,6 @@
           return m.autoOn === 'roundStart'
         })
         if(stageStatusList.length){
-          gameData.gameTime++
           let isStatusNext 
           for(let i=0;i<thePlayer.status.length;i++){
             let status = thePlayer.status[i]
@@ -1221,7 +1094,6 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<thePlayer.status.length;i++){
-            gameData.gameTime++
             let status = thePlayer.status[i]
             let nextCheck = statusActions(status,thePlayer,true)
             if(!nextCheck.next){
@@ -1247,6 +1119,28 @@
         type: "enemy",
         text: `${theEnemy.name}的回合开始！`
       });
+      if(theEnemy.skills && theEnemy.skills.length){
+        theEnemy.skills.forEach(skl=>{
+          if(skl.restCold){
+            switch(skl.coldType){
+              case 'round':{
+                skl.restColdNum--
+                skl.restCold = `${skl.restColdNum}个回合`;
+                break;
+              }
+              case 'fight':{
+                break;
+              }
+              case 'time':{ 
+                break;
+              }
+              case 'game':{
+                break;
+              }
+            }
+          }
+        })
+      }
       if(theEnemy.onRoundStart){
         if(!runUnitHook(theEnemy.onRoundStart,theEnemy).next){
           result.next=false
@@ -1260,7 +1154,6 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<theEnemy.status.length;i++){
-            gameData.gameTime++
             let status = theEnemy.status[i]
             let nextCheck = statusActions(status,theEnemy,false)
             if(!nextCheck.next){
@@ -1298,7 +1191,6 @@
         if(stageStatusList.length){
           let isStatusNext 
           for(let i=0;i<theEnemy.status.length;i++){
-            gameData.gameTime++
             let status = theEnemy.status[i]
             let nextCheck = statusActions(status,theEnemy,false)
             if(!nextCheck.next){
@@ -1333,7 +1225,6 @@
 
     // 开始战斗
     function startCombat() {
-      gameData.gameTime++
       // 获取当前地点的敌人类型
       const currentLocation = gameData.locations.find(l => l.name === gameData.currentLocation);
       const locationEnemies = currentLocation.enemies;
@@ -1351,39 +1242,57 @@
       gameData.combat.playerRoundNum = 0
       gameData.combat.enemyRoundNum = 0
       // 更新战斗事件
-      gameData.currentEvent = {
-        title: "遭遇敌人",
-        description: `你遭遇了${gameData.combat.enemy.name}！准备战斗！`,
-        actions: []
-      };
-      if(gameData.combat.enemy.startFirst){
-        if(gameData.combat.enemy.onFightStart){
-          if(!runUnitHook(gameData.combat.enemy.onFightStart,gameData.combat.enemy,false).next){
-            return
+      let theEvent = pickEvent('遭遇敌人')
+      theEvent.description = theEvent.description.replace('{enemy}',gameData.combat.enemy.name)
+      gameData.currentEvent = theEvent;
+      if(!startBothFight().next){
+        return
+      }
+
+      updateUI();
+    }
+    function startBothFight(){
+      let result = {next:true}
+      const theEnemy = gameData.combat.enemy;
+      const thePlayer = gameData.player;
+      // 战斗级冷却
+      thePlayer.skills.forEach(skl=>{
+        if(skl.restCold && skl.coldType==='fight'){
+          skl.restColdNum--;
+          skl.restCold = `${skl.restColdNum}场战斗`
+        }
+      })
+      if(theEnemy.startFirst){
+        if(theEnemy.onFightStart){
+          if(!runUnitHook(theEnemy.onFightStart,theEnemy,false).next){
+            result.next = false;
+            return result
           }
         }
-        if(gameData.player.onFightStart){
-          if(!runUnitHook(gameData.player.onFightStart,gameData.player,true).next){
-            return
+        if(thePlayer.onFightStart){
+          if(!runUnitHook(thePlayer.onFightStart,thePlayer,true).next){
+            result.next = false;
+            return result
           }
         }
         runEnemyRoundAction()
       }else{
-        if(gameData.player.onFightStart){
-          if(!runUnitHook(gameData.player.onFightStart,gameData.player,true).next){
-            return
+        if(thePlayer.onFightStart){
+          if(!runUnitHook(thePlayer.onFightStart,thePlayer,true).next){
+            result.next = false;
+            return result
           }
         }
-        if(gameData.combat.enemy.onFightStart){
-          if(!runUnitHook(gameData.combat.enemy.onFightStart,gameData.combat.enemy,false).next){
-            return
+        if(theEnemy.onFightStart){
+          if(!runUnitHook(theEnemy.onFightStart,theEnemy,false).next){
+            result.next = false;
+            return result
           }
         }
         gameData.combat.totalRound++
         gameData.combat.playerRoundNum++
       }
-
-      updateUI();
+      return result
     }
 
     // 更新战斗UI
@@ -1393,21 +1302,29 @@
       // 更新玩家状态
       const playerHpPercent = (gameData.player.hp / gameData.player.maxHp) * 100;
       elements.playerHpBar.style.width = `${playerHpPercent}%`;
-      elements.playerHpText.textContent = `${gameData.player.hp}/${gameData.player.maxHp}`;
+      elements.playerHpText.textContent = `${gameData.player.hp>1e8?gameData.player.hp.toExponential(4):gameData.player.hp}/${gameData.player.maxHp>1e8?gameData.player.maxHp.toExponential(4):gameData.player.maxHp}`;
 
       // 更新敌人状态
       elements.enemyIcon.textContent = gameData.combat.enemy.icon;
       elements.enemyName.textContent = gameData.combat.enemy.name;
       const enemyHpPercent = (gameData.combat.enemy.hp / gameData.combat.enemy.maxHp) * 100;
       elements.enemyHpBar.style.width = `${enemyHpPercent}%`;
-      elements.enemyHpText.textContent = `${gameData.combat.enemy.hp}/${gameData.combat.enemy.maxHp}`;
+      elements.enemyHpText.textContent = `${
+        (gameData.combat.enemy.hp>1e8 || gameData.combat.enemy.hp <-1e8)
+        ? gameData.combat.enemy.hp.toExponential(4)
+        : gameData.combat.enemy.hp
+      }/${
+        (gameData.combat.enemy.maxHp>1e8 || gameData.combat.enemy.maxHp <-1e8)
+        ? gameData.combat.enemy.maxHp.toExponential(4)
+        : gameData.combat.enemy.maxHp
+      }`;
 
       // 更新战斗日志
       elements.combatLog.innerHTML = '';
       gameData.combat.log.forEach(entry => {
         const logEntry = document.createElement('div');
         logEntry.className = `log-entry ${entry.type}`;
-        logEntry.textContent = `${gameData.gameTime}：${entry.text}`;
+        logEntry.textContent = `${gameData.gameTime++}：${entry.text}`;
         elements.combatLog.appendChild(logEntry);
       });
       elements.combatLog.scrollTop = elements.combatLog.scrollHeight;
@@ -1415,7 +1332,6 @@
 
     // 处理玩家攻击
     function handlePlayerAttack() {
-      gameData.gameTime++
       if (!gameData.combat.active || !gameData.combat.enemy) return;
 
       // 计算伤害（考虑攻击力和防御力）
@@ -1539,7 +1455,6 @@
     }
     // 打开道具选择模态框
     function openItemModal() {
-      gameData.gameTime++
       elements.itemModalGrid.innerHTML = '';
 
       gameData.player.inventory.forEach(item => {
@@ -1566,7 +1481,7 @@
 
     // 使用道具
     function useItem(item, isOutFight = false,isBySkill=false) {
-      gameData.gameTime++
+      // todo  物品CD 
       if (item.effectType === 'heal') {
 
         let hpBefore = gameData.player.hp;
@@ -1617,18 +1532,10 @@
           });
           updateCombatUI();
         } else {
+          let theEvent = pickEvent('使用道具')
+          theEvent.description = announce;
           // 非战斗 事件更新
-          gameData.currentEvent = {
-            title: "使用道具",
-            description: announce,
-            actions: [
-              { text: "冒险探索", type: "explore" },
-              { text: "休息", type: "rest" },
-              { text: "继续前进", type: "escape" },
-              gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-              gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-            ].filter(Boolean)
-          };
+          gameData.currentEvent = theEvent;
         }
 
       } else if (item.effectType === 'damage') {
@@ -1962,17 +1869,9 @@
             });
             updateCombatUI();
           } else {
-            gameData.currentEvent = {
-              title: "使用道具",
-              description: anounce,
-              actions: [
-                { text: "冒险探索", type: "explore" },
-                { text: "休息", type: "rest" },
-                { text: "继续前进", type: "escape" },
-                gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-              ].filter(Boolean)
-            };
+            let theEvent = pickEvent('使用道具')
+            theEvent.description = anounce;
+            gameData.currentEvent = theEvent;
           }
         }
 
@@ -2040,17 +1939,9 @@
             });
             updateCombatUI();
           } else {
-            gameData.currentEvent = {
-              title: "开箱子",
-              description: announce,
-              actions: [
-                { text: "冒险探索", type: "explore" },
-                { text: "休息", type: "rest" },
-                { text: "继续前进", type: "escape" },
-                gameData.currentPlaceIndex > 0 ? { text: '返回', type: 'goForward' } : null,
-                gameData.player.inventory.length > 0 ? { text: '使用物品', type: 'useItem' } : null
-              ].filter(Boolean)
-            };
+            let theEvent = pickEvent('开箱子')
+            theEvent.description = announce;
+            gameData.currentEvent = theEvent;
           }
         }
       }
@@ -2075,7 +1966,6 @@
                     `;
           // 指定道具的道具对话框道具点击
           itemEl.addEventListener('click', () => {
-            gameData.gameTime++
             useItem(item, isOutFight);
             elements.itemModal.style.display = 'none';
           });
@@ -2153,7 +2043,6 @@
     }
     // 打开技能选择模态框
     function openSkillModal() {
-      gameData.gameTime++
       elements.skillModalGrid.innerHTML = '';
 
       gameData.player.skills.forEach(playerSkill => {
@@ -2673,7 +2562,6 @@
         */
         let hpRecoverCount  = hookConfig.hpRecoverCount || 1
         for(let i=0;i<hpRecoverCount;i++){
-          gameData.gameTime++
           let before = unit.hp
           let value = hookConfig.hpRecover
           if(hookConfig.hpRecoverType === 'bigHp'){
@@ -2761,7 +2649,7 @@
         let extraAttackType = hookConfig.extraAttackType || 'attack';
         let unitAttack = pickUnitAttack(unit)
         for(let i=0;i<extraAttackCount;i++){
-          let et = extraAttack;
+          let et = unitAttack;
           if(extraAttackType==='bigAttack'){
             et = extraAttack / 100 * unitAttack;
           }
@@ -2866,7 +2754,8 @@
         // 延迟后关闭战斗
         setTimeout(() => {
           gameData.combat.active = false;
-          gameData.currentEvent = unit.onDeath.event
+          let theEvent = pickEvent('伪神之恨')
+          gameData.currentEvent = theEvent
           updateUI();
         }, 2000);
         result.next=false;
@@ -3045,13 +2934,9 @@
           // 延迟后关闭战斗
           setTimeout(() => {
             gameData.combat.active = false;
-            gameData.currentEvent = {
-              title: "你死了！",
-              description: `你被BOSS单位${gameData.combat.enemy.name}击败了，故事终结！`,
-              actions: [
-                { text: "查看后续", type: "end:lose" },
-              ].filter(Boolean)
-            }
+            let theEvent = pickEvent('被BOSS击杀');
+            theEvent.description = theEvent.description.replace("{enemy}",gameData.combat.enemy.name);
+            gameData.currentEvent = theEvent;
             updateUI();
           }, 2000);
           result.next = false
@@ -3151,13 +3036,21 @@
     // 使用技能
     function useSkill(skill, isEnemy = false) {
       let result = {next:true,}
-      gameData.gameTime++
       if (gameData.combat.active && gameData.combat.enemy) {
         let skillUnit = isEnemy ? gameData.combat.enemy : gameData.player;
         let oppoUnit = isEnemy ? gameData.player : gameData.combat.enemy;
         let roundOwner = isEnemy ? 'enemy' : 'player';
         let roundOwnerName = isEnemy ? skillUnit.name : '你';
 
+        // 使用技能 但处于CD 不可使用
+        if(skill.restColdNum>0){
+          gameData.combat.log.push({
+            type:roundOwner,
+            text:`${roundOwnerName}尝试使用技能：${skill.name}，但技能处于冷却：${skill.restCold}`,
+          })
+          updateCombatUI()
+          return result
+        }
         let costInfo = {}
         // 技能消耗
         if (skill.bigCost) {
@@ -3258,6 +3151,26 @@
           }
           let oppoHpBefore = oppoUnit.hp
           oppoUnit.hp -= skillDamage;
+          if(skill.cd){
+            let coldNum = skill.cd;
+            let coldType = 'round';
+            if(typeof skill.cd==='string'){
+              [,coldNum,coldType] = skill.cd.match((/^(\d+)(round|fight|time|game)$/))
+            }
+            if(!skill.coldType){skill.coldType = coldType}
+            skill.restColdNum = coldNum;
+            skill.restCold = `${coldNum}${
+              coldType==='round'
+                ? '个回合'
+                : coldType==='fight' 
+                  ? '场战斗'
+                  : coldType==='time' 
+                    ? '游戏时刻'
+                    : coldType==='game' 
+                      ? '次游戏'
+                      :''
+            }`;
+          }
           if (roundOwner === 'player') {
             sumPlayer({
               sumType: 'damage',
@@ -3600,7 +3513,7 @@
             });
           }
           if (reward.bigExp) {
-            let expReward = Math.floor(reward.bigExp / 100 * gameData.player.nextLevelExp);
+            let expReward = Math.floor(reward.bigExp / 100 * gameData.player.nextLevelExp)||reward.bigExp;
             let expBefore = gameData.player.exp
             gameData.player.exp += expReward
             // 统计经验获取与经验量
@@ -3613,7 +3526,7 @@
               after: gameData.player.exp,
               isPlayerRound: true,
             });
-            let expRewardGain = `获得${reward.bigExp}%经验值！`
+            let expRewardGain = `获得${expReward}经验值！`
             rewardsGainList.push(expRewardGain)
             gameData.combat.log.push({
               type: "info",
@@ -3621,7 +3534,7 @@
             });
           }
           if (reward.bigGold) {
-            let goldReward = Math.floor(reward.bigExp / 100 * gameData.player.gold);
+            let goldReward = Math.floor(reward.bigGold / 100 * gameData.player.gold)||reward.bigGold;
             let goldBefore = gameData.player.gold
             gameData.player.gold += goldReward
             // 统计金币获得与金币量
@@ -3634,7 +3547,7 @@
               after: gameData.player.gold,
               isPlayerRound: true,
             });
-            let goldRewardGain = `获得${reward.bigExp}%金币！`
+            let goldRewardGain = `获得${goldReward}金币！`
             rewardsGainList.push(goldRewardGain)
             gameData.combat.log.push({
               type: "info",
@@ -3960,6 +3873,17 @@
             }
             let theBefore = thePlayer[k]
             thePlayer[k] *= 2
+            if(k==='hpRecover'){
+              if(!thePlayer.onRoundStart){
+                thePlayer.onRoundStart = {
+                  hpRecover:thePlayer.hpRecover
+                }
+              }else if(!thePlayer.onRoundStart.hpRecover){
+                thePlayer.onRoundStart.hpRecover = thePlayer.hpRecover
+              }else{
+                thePlayer.onRoundStart.hpRecover += (thePlayer.hpRecover - theBefore)
+              }
+            }
             levelUpCommonGains.push(`${rpgGamePropMapper[k]}属性提升${thePlayer[k] - theBefore}点！`)
             
             sumPlayer({
@@ -3983,6 +3907,17 @@
             }
             let theBefore = thePlayer[k]
             thePlayer[k] *= 10
+            if(k==='hpRecover'){
+              if(!thePlayer.onRoundStart){
+                thePlayer.onRoundStart = {
+                  hpRecover:thePlayer.hpRecover
+                }
+              }else if(!thePlayer.onRoundStart.hpRecover){
+                thePlayer.onRoundStart.hpRecover = thePlayer.hpRecover
+              }else{
+                thePlayer.onRoundStart.hpRecover += (thePlayer.hpRecover - theBefore)
+              }
+            }
             levelUpCommonGains.push(`${rpgGamePropMapper[k]}属性提升${thePlayer[k] - theBefore}点！`)
             
             sumPlayer({
@@ -3999,13 +3934,24 @@
         }else if(levelReward.funnyProp){
           thePlayer.props.forEach(k=>{
             if(k==='hp'){
-              thePlayer.maxHp *= 1e4  
+              thePlayer.maxHp *= 1e2  
             }
             if(k==='bigHp'){
-              thePlayer.maxHp *= 1e4
+              thePlayer.maxHp *= 1e2
             }
             let theBefore = thePlayer[k]
-            thePlayer[k] *= 1e4;
+            thePlayer[k] *= 1e2;
+            if(k==='hpRecover'){
+              if(!thePlayer.onRoundStart){
+                thePlayer.onRoundStart = {
+                  hpRecover:thePlayer.hpRecover
+                }
+              }else if(!thePlayer.onRoundStart.hpRecover){
+                thePlayer.onRoundStart.hpRecover = thePlayer.hpRecover
+              }else{
+                thePlayer.onRoundStart.hpRecover += (thePlayer.hpRecover - theBefore)
+              }
+            }
             levelUpCommonGains.push(`${rpgGamePropMapper[k]}属性提升${thePlayer[k] - theBefore}点！`)
             
             sumPlayer({
@@ -4354,6 +4300,15 @@
           if(!thePlayer.props.includes('hpRecover')){
             thePlayer.props.push('hpRecover');
             thePlayer.hpRecover = thePlayer.hpRecover || 0
+            if(!thePlayer.onRoundStart){
+              thePlayer.onRoundStart = {
+                hpRecover:thePlayer.hpRecover
+              }
+            }else if(!thePlayer.onRoundStart.hpRecover){
+              thePlayer.onRoundStart.hpRecover = thePlayer.hpRecover
+            }else{
+              thePlayer.onRoundStart.hpRecover += thePlayer.hpRecover
+            }
           }
           let before = thePlayer.hpRecover;
           thePlayer.hpRecover += rewardOption.value;
@@ -4433,6 +4388,7 @@
       }
 
       gameData.currentEvent.description += `你升到了${thePlayer.level}级！${currentGains.join('')}`
+      thePlayer.currentLevelUpConfig = null;
       elements.levelupModal.style.display = 'none';
 
       updateUI();
@@ -4796,6 +4752,8 @@
     // 简化存储数据对象
     function briefGameDataToStore(){
       let copy = JSON.parse(JSON.stringify(gameData));
+      delete copy.uselessExploreResults;
+      delete copy.locations;
       delete copy.allEnemies
       delete copy.allItems
       delete copy.allSkills
@@ -4986,6 +4944,17 @@
         elements.notification.classList.remove('show');
       }, 3000);
     }
+    window.addEventListener('keydown',(e)=>{
+      if(e.ctrlKey && e.key==='s'){
+        switch(e.key){
+          case 's':{
+            e.preventDefault()
+            saveGame('local')
+            break;
+          }
+        }
+      }
+    })
     // 初始化游戏
     window.onload = initGame;
 

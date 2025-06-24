@@ -389,13 +389,6 @@ const rpgGameEnemyData = [
       absoluteDamage: 100,
     },
     onDeath:{
-      event:{
-        title: "一切都给本神陪葬吧！",
-        description: `路边王临死发出怒吼并向世界释放诅咒！`,
-        actions:[
-          { text: '故事的最后', type: 'lastStory' }
-        ]
-      },
     },
     skill: [
       '神血弹', '错误的神术', "路边魔啸"

@@ -421,5 +421,108 @@ const rpgGamePropMapper = {
   bigAttack:'大攻击',
   bigDefend:'大防御',
   criticalRate:'暴击率',
+  hpRecover:'回合恢复',
   criticalDamage:'暴击伤害',
+  chaseAttack:'回合追击',
+  dodgeRate:'闪避率',
+  extraAbsoluteDamage:'额外绝对伤害',
 }
+
+const rpgGameOtherExploreResultData = [
+  { name: '你发呆了一会儿！', rate: 20, },
+  { name: '你看到一个巨大的背影，躲了一阵子！', rate: 20, },
+  { name: '看到熟悉的风景，感怀了一阵子！', rate: 20, },
+  { name: '找到一个安全的地方，好好地睡了一会儿！', rate: 20, effect: { hp: 100 } },
+  { name: '找到一个简陋的地方，睡觉但被蚊虫叮了！', rate: 20, effect: { hp: [50,-1], } },
+  { name: '被什么东西追了一路，你终于安全了！', rate: 20, },
+  { name: '追了猎物很久，但没捉到！', rate: 20, },
+  { name: '路遇小河，你取了水！', rate: 20, },
+  { name: '掉进井里，废了好长时间爬出来！', rate: 20, }
+].filter(Boolean)
+
+const rpgGameLocationData = [
+  { name: "陷落的村庄", description: "被摧毁的故乡", enemies: ["路边一条", "路边一筒", "路边一万", '路边一条龙'],
+
+    explore: [
+      {
+        type:'skill',
+        rate:20,
+        name:'水弹Lv5',
+        require:{
+          level:5,
+        },
+      }
+    ].filter(Boolean)
+  },
+  { name: "受侵蚀的山林", description: "危险的森林", enemies: ["哥布木", "哥布林", "哥布森"] },
+  {
+    name: "残破的教堂", description: "暂时的避难所", enemies: ["哥石木", "哥石林"], 
+    explore: [
+      {
+        type: 'item',
+        rate: 80,
+        require: {
+          level: 10,
+          defeatList:['哥布森'],
+        },
+        name: '泣玉',
+      },
+      {
+        type:'skill',
+        rate:20,
+        name:'水弹Lv10',
+        require:{
+          level:20,
+        },
+      }
+    ].filter(Boolean)
+  },
+  { name: "山中湖", description: "宁静的湖泊", enemies: ["哥石森", "弟剪木"],
+    explore:[
+      ...Array.from({ length: 10 }).map((m, i) => {
+        let lvNum = i + 1;
+        return {
+          type:'item',
+          id: `cur-gold-attack-lv${lvNum}`,
+          name: `财富攻击Lv${lvNum}`,
+          rate: 20 / lvNum,
+          quantity: 1,
+          require:{
+            level: lvNum * 2,
+            defeatList: ['哥石森'],
+          }
+        }
+      }),
+    ].filter(Boolean)
+  },
+  { name: "国都", description: "王国的中心", enemies: ["弟剪林", "弟剪森", '弟剪吹'] ,
+    explore:[
+      ...Array.from({ length: 5 }).map((m, i) => {
+        let lvNum = i + 1;
+        return {
+          type:'skill',
+          name: `水枪Lv${lvNum}`,
+          rate: 30 / lvNum,
+          require:{
+            level: 30 + i * 2,
+          }
+        }
+      }),
+    ].filter(Boolean)
+  },
+  { name: "失修地道", description: "黑暗的地下通道", enemies: ["路边一条龙", "路边大四喜", 'undefined'],
+    explore:[
+      ...Array.from({ length: 3 }).map((m, i) => {
+        let lvNum = i + 1;
+        return {
+          type:'skill',
+          name: `水龙弹Lv${lvNum}`,
+          rate: 50 / lvNum,
+          require:{
+            level: 50 + i ** 2,
+          }
+        }
+      }),
+    ].filter(Boolean)
+  }
+].filter(Boolean)
