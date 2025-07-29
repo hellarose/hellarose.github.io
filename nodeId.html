@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>节点ID工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      height: 100vh;
+    }
+    .wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .id {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .label {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .btn {
+      margin-top: 16px;
+      padding: 8px 16px;
+      background-color: #333;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="id">
+      <div class="label">ID：</div>
+      <div class="value" data-ref="id-value"></div>
+      <div class="btn" data-ref="refresher">刷新</div>
+    </div>
+  </div>
+  <script>
+    function qs(es){return document.querySelector(es);}
+
+    class IdTool {
+      static grower = 0;
+      static temp = Date.now()
+      constructor(){
+        this.grower = IdTool.grower++;
+        this.id = (IdTool.temp = Date.now()).toString(36).padStart(12,'0') + (this.grower).toString(36).padStart(4,'0');
+      }
+      get value(){
+        return this.id;
+      }
+      [Symbol.toStringTag] = 'IdTool';
+      [Symbol.toString] = function(){
+        return this.value;
+      }
+    }
+    function test(){
+      console.log(new IdTool().value);
+    }
+    test()
+    qs('[data-ref="id-value"]').innerText = new IdTool().value;
+    qs('[data-ref="refresher"]').onclick = function(){
+      qs('[data-ref="id-value"]').innerText = new IdTool().value;
+    }
+  </script>
+</body>
+</html>
